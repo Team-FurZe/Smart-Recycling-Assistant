@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: sra-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: sra_user
+      POSTGRES_PASSWORD: sra_pass
+      POSTGRES_DB: sra
+    volumes:
+      - ./db-data:/var/lib/postgresql/data

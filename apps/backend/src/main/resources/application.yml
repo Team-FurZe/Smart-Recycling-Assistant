@@ -1,0 +1,18 @@
+server:
+  port: ${BACKEND_PORT:8080}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${PG_HOST:localhost}:${PG_PORT:5432}/${PG_DB:sra}
+    username: ${PG_USER:sra_user}
+    password: ${PG_PASS:sra_pass}
+  jpa:
+    hibernate:
+      ddl-auto: update       # ilk aşamada tabloyu otomatik oluşturur
+    show-sql: false
+
+ai:
+  url: ${AI_URL:http://localhost:8000}  # FastAPI servisi
+
+cors:
+  allowed-origins: "http://localhost:5173,http://10.0.2.2:5173"

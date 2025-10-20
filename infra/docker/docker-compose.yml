@@ -10,4 +10,7 @@ services:
       POSTGRES_PASSWORD: sra_pass
       POSTGRES_DB: sra
     volumes:
-      - ./db-data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

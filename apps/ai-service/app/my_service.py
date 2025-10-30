@@ -5,7 +5,7 @@ from PIL import Image
 import numpy as np
 import io, os
 
-MODEL_PATH = os.environ.get("MODEL_PATH", "model_finetuned.h5")
+MODEL_PATH = os.environ.get("MODEL_PATH", "ai-model-1/model_finetuned.h5")
 CLASS_NAMES = ['battery','biological','cardboard','clothes','glass','metal','paper','plastic','shoes','trash']
 BIN_COLORS = {
     "plastic":"blue","paper":"blue","metal":"yellow","glass":"green","cardboard":"blue",

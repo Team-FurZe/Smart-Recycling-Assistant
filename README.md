@@ -76,6 +76,8 @@ curl http://localhost:8080/api/v1/health
 curl -F "file=@/ABSOLUTE/PATH/to/test.jpg" http://localhost:8080/api/v1/predict | jq
 # { "label":"plastic", "confidence":0.87, "binColor":"yellow", "tips":[...] }
 ```
+curl -X POST -F "file=@/Users/PatrnPenguen/Desktop/test_images/plastic_bottle.jpg" http://127.0.0.1:5050/predict
+
 
 **DB’de kayıt kontrolü (opsiyonel):**
 

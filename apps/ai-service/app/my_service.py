@@ -1,72 +1,79 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from contextlib import asynccontextmanager
-from typing import Optional
-from PIL import Image
-import numpy as np
-import io, os
+# my_service.py
+# ----------------------------------------
+# Flask-based AI service for Smart Recycle Assistant
+# Loads model_finetuned.h5 and predicts waste category
+# ----------------------------------------
 
-MODEL_PATH = os.environ.get("MODEL_PATH", "ai-model-1/model_finetuned.h5")
-CLASS_NAMES = ['battery','biological','cardboard','clothes','glass','metal','paper','plastic','shoes','trash']
+from flask import Flask, request, jsonify
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+import numpy as np
+import os
+
+app = Flask(__name__)
+
+# 🔹 Model and class labels
+MODEL_PATH = "models/ai-model-1/model_finetuned.h5"
+CLASS_NAMES = ['battery', 'biological', 'cardboard', 'clothes', 'glass',
+               'metal', 'paper', 'plastic', 'shoes', 'trash']
+
+# 🔹 Load model once
+model = load_model(MODEL_PATH)
+print("✅ Model loaded successfully!")
+
+# 🔹 Helper: Map waste type to bin color
 BIN_COLORS = {
-    "plastic":"blue","paper":"blue","metal":"yellow","glass":"green","cardboard":"blue",
-    "biological":"brown","battery":"red","trash":"gray","clothes":"pink","shoes":"pink"
+    "plastic": "blue",
+    "paper": "blue",
+    "metal": "yellow",
+    "glass": "green",
+    "cardboard": "blue",
+    "biological": "brown",
+    "battery": "red",
+    "trash": "gray",
+    "clothes": "pink",
+    "shoes": "pink"
 }
 
-tf_loaded = False
-model = None
+@app.route("/")
+def home():
+    return jsonify({"message": "Smart Recycle Assistant AI Service is running 🚀"})
 
-def try_load_model() -> Optional[object]:
-    global tf_loaded, model
-    if not os.path.exists(MODEL_PATH):
-        return None
+@app.route("/predict", methods=["POST"])
+def predict():
     try:
-        from tensorflow.keras.models import load_model
-        model = load_model(MODEL_PATH)
-        tf_loaded = True
-        print(f"✅ Model loaded: {MODEL_PATH}")
-        return model
+        if "file" not in request.files:
+            return jsonify({"error": "No image uploaded"}), 400
+
+        file = request.files["file"]
+        if file.filename == "":
+            return jsonify({"error": "Empty filename"}), 400
+
+        # 🔹 Save and preprocess the image
+        img_path = "temp.jpg"
+        file.save(img_path)
+
+        img = image.load_img(img_path, target_size=(224, 224))
+        img_array = np.expand_dims(image.img_to_array(img) / 255.0, axis=0)
+
+        # 🔹 Predict
+        preds = model.predict(img_array)
+        predicted_class = CLASS_NAMES[np.argmax(preds[0])]
+        confidence = float(np.max(preds[0]))
+        bin_color = BIN_COLORS.get(predicted_class, "unknown")
+
+        # 🔹 Cleanup
+        os.remove(img_path)
+
+        return jsonify({
+            "class": predicted_class,
+            "confidence": round(confidence, 3),
+            "bin_color": bin_color
+        })
+
     except Exception as e:
-        print(f"⚠️  Model load failed ({MODEL_PATH}): {e}")
-        return None
+        return jsonify({"error": str(e)}), 500
 
-def preprocess(pil: Image.Image) -> np.ndarray:
-    pil = pil.convert("RGB").resize((224, 224))
-    arr = np.asarray(pil, dtype=np.float32) / 255.0
-    return np.expand_dims(arr, axis=0)
 
-def predict_with_model(pil: Image.Image):
-    x = preprocess(pil)
-    preds = model.predict(x)
-    idx = int(np.argmax(preds[0]))
-    label = CLASS_NAMES[idx]
-    conf = float(np.max(preds[0]))
-    return {"label": label, "confidence": conf, "binColor": BIN_COLORS.get(label, "unknown")}
-
-def predict_stub(pil: Image.Image):
-    label = "plastic" if pil.size[0] >= pil.size[1] else "paper"
-    conf = 0.66
-    return {"label": label, "confidence": conf, "binColor": BIN_COLORS.get(label, "unknown")}
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    try_load_model()
-    yield
-
-app = FastAPI(lifespan=lifespan)
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "model": ("loaded" if tf_loaded else "stub")}
-
-@app.post("/predict")
-async def predict(file: UploadFile = File(...)):
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=415, detail="Only image/* allowed")
-    data = await file.read()
-    try:
-        pil = Image.open(io.BytesIO(data))
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid image")
-    out = predict_with_model(pil) if tf_loaded and model is not None else predict_stub(pil)
-    out["confidence"] = round(float(out["confidence"]), 3)
-    return out
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)

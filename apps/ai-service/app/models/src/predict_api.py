@@ -13,7 +13,7 @@ import os
 app = Flask(__name__)
 
 # 🔹 Model and class labels
-MODEL_PATH = "model_finetuned.h5"
+MODEL_PATH = "../ai-model-1/model_finetuned.h5"
 CLASS_NAMES = ['battery', 'biological', 'cardboard', 'clothes', 'glass', 'metal', 'paper', 'plastic', 'shoes', 'trash']
 
 # 🔹 Load model once

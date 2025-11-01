@@ -1,5 +1,8 @@
 server:
   port: ${BACKEND_PORT:8080}
+  tomcat:
+    # Büyük body'lerde (ör. 10MB+) swallow limitine takılmaması için
+    max-swallow-size: -1
 
 spring:
   datasource:
@@ -10,6 +13,11 @@ spring:
     hibernate:
       ddl-auto: update       # ilk aşamada tabloyu otomatik oluşturur
     show-sql: false
+  servlet:
+    multipart:
+      # 413 hatasını önlemek için upload limitleri (ihtiyaca göre ayarlayabilirsin)
+      max-file-size: 20MB
+      max-request-size: 20MB
 
 ai:
   url: ${AI_URL:http://localhost:8000}  # FastAPI servisi

@@ -35,10 +35,15 @@ docker compose ps           # sra-postgres Up olmalı
 
 ```bash
 cd apps/ai-service
-python -m venv .venv
+python -m venv .venv    # İlk kez çalıştırırken
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install fastapi uvicorn python-multipart
-uvicorn app.main:app --reload --port 8000
+pip install fastapi uvicorn python-multipart    # Not necessery after installed once
+
+cd app
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+or
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --reload --port 8000   # Old version
 ```
 
 **Sağlık kontrolü:**

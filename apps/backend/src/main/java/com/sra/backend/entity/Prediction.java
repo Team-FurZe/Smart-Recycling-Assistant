@@ -16,5 +16,6 @@ public class Prediction {
 
   private String label;
   private double confidence;
+  private String binColor;
   private Instant createdAt = Instant.now();
 }

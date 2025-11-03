@@ -45,24 +45,17 @@ public class PredictService {
       throw new RuntimeException("AI service error");
     }
 
-    String label = String.valueOf(resp.getBody().get("label"));
+    String label = String.valueOf(resp.getBody().get("class"));
     double confidence = Double.parseDouble(String.valueOf(resp.getBody().get("confidence")));
+    String binColor = String.valueOf(resp.getBody().get("bin_color"));
 
     // 2) DB'ye kaydet
     var p = new Prediction();
     p.setLabel(label);
     p.setConfidence(confidence);
+    p.setBinColor(binColor);
     repo.save(p);
 
-    // 3) Zenginleştir: çöp kutusu rengi + kısa ipuçları (şimdilik hard-coded)
-    String binColor = switch (label) {
-      case "plastic" -> "yellow";
-      case "paper", "cardboard" -> "blue";
-      case "glass" -> "green";
-      case "metal" -> "gray";
-      case "organic" -> "brown";
-      default -> "black";
-    };
 
     List<String> tips = switch (label) {
       case "plastic" -> List.of("Rinse bottles", "Remove caps if required");

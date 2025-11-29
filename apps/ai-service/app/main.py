@@ -28,6 +28,8 @@ CLASS_NAMES = [
     "glass", "metal", "paper", "plastic", "shoes", "trash"
 ]
 
+THRESHOLD = 0.4
+
 # 🔹 Load model once at startup
 print("🚀 Loading model...")
 model = tf.keras.models.load_model(MODEL_PATH)
@@ -63,14 +65,28 @@ async def predict(file: UploadFile = File(...)):
         img = Image.open(io.BytesIO(contents)).convert("RGB")
         img = img.resize((224, 224))
 
-        # 🔹 Preprocess and predict
+        # 🔹 Preprocess
         img_array = np.expand_dims(np.array(img) / 255.0, axis=0)
+
+        # 🔹 Predict
         preds = model.predict(img_array)
         predicted_class = CLASS_NAMES[np.argmax(preds[0])]
         confidence = float(np.max(preds[0]))
+        
+        # 🔹 Check confidence threshold
+        if confidence < THRESHOLD:
+            return JSONResponse({
+                "detected": False,
+                "class": "unknown",
+                "message": "No waste detected",
+                "confidence": round(confidence, 3),
+                "bin_color": "unknown"
+            })
+
         bin_color = BIN_COLORS.get(predicted_class, "unknown")
 
         return JSONResponse({
+            "detected": True,
             "class": predicted_class,
             "confidence": round(confidence, 3),
             "bin_color": bin_color

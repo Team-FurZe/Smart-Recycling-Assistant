@@ -1,7 +1,9 @@
 export async function predictImage(file) {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/predict`, {
+    console.log("ALL ENVS:", import.meta.env);
+    console.log("VITE_BACKEND_URL:", import.meta.env.VITE_BACKEND_URL); // "http://localhost:8080"
+    const res = await fetch("http://localhost:8080/api/v1/predict", {  // `${import.meta.env.VITE_BACKEND_URL}/api/v1/predict` --> "http://localhost:8080/api/v1/predict"
       method: "POST",
       body: form,
     });

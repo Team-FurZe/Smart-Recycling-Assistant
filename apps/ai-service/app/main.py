@@ -17,6 +17,10 @@ import os
 # 🔹 Initialize FastAPI app
 app = FastAPI(title="Smart Recycle Assistant API")
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 # 🔹 Model and class labels
 MODEL_PATH = "models/ai-model-1/model_finetuned.h5"
 CLASS_NAMES = [

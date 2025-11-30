@@ -2,8 +2,8 @@ import os
 import shutil
 import random
 
-RAW_DATA_DIR = "data/raw"
-PROCESSED_DATA_DIR = "data/processed"
+RAW_DATA_DIR = "C:/Projects/Smart Recycling Assistant/Dataset/garbage-dataset/raw"
+PROCESSED_DATA_DIR = "C:/Projects/Smart Recycling Assistant/Dataset/garbage-dataset/processed"
 
 TRAIN_SPLIT = 0.7
 VAL_SPLIT = 0.2

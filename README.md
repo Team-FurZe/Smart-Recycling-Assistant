@@ -37,7 +37,7 @@ docker compose ps           # sra-postgres Up olmalı
 cd apps/ai-service
 python -m venv .venv    # İlk kez çalıştırırken
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install fastapi uvicorn tensorflow numpy Pillow python-multipart
+pip install fastapi uvicorn tensorflow numpy matplotlib scipy Pillow python-multipart
     # Not necessery after installed once
 
 cd app

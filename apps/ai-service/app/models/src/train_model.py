@@ -13,6 +13,7 @@ from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 import matplotlib.pyplot as plt
+import json
 
 # ⚙️ Parameters
 IMG_SIZE = (224, 224)
@@ -20,7 +21,7 @@ BATCH_SIZE = 16
 EPOCHS = 30
 
 # 📁 Dataset paths
-BASE_DIR = "data/processed"
+BASE_DIR = "C:/Projects/Smart Recycling Assistant/Dataset/garbage-dataset/processed"
 TRAIN_DIR = os.path.join(BASE_DIR, "train")
 VAL_DIR = os.path.join(BASE_DIR, "val")
 TEST_DIR = os.path.join(BASE_DIR, "test")
@@ -53,6 +54,15 @@ test_data = test_datagen.flow_from_directory(
     TEST_DIR, target_size=IMG_SIZE, batch_size=BATCH_SIZE, class_mode='categorical'
 )
 
+# Save class indices for inference (mapping class_name -> index)
+print("📚 Class indices:", train_data.class_indices)
+
+with open("class_indices.json", "w") as f:
+    json.dump(train_data.class_indices, f)
+
+print("✅ Saved class_indices.json")
+
+
 # 🧠 Base Model (Transfer Learning)
 base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 base_model.trainable = False  # Freeze base layers for first training
@@ -82,9 +92,21 @@ history = model.fit(
     epochs=EPOCHS
 )
 
+
+# train_model.py'nin bulunduğu klasörü baz al
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# ../ai-model-1 klasörünü hedefle
+MODEL_DIR = os.path.normpath(os.path.join(THIS_DIR, "..", "ai-model-1"))
+
+os.makedirs(MODEL_DIR, exist_ok=True)  # yoksa oluştur
+
+MODEL_OPTIMIZED_PATH = os.path.join(MODEL_DIR, "model_optimized_1.h5")
+
+
 # 💾 Save Model
-model.save("model_optimized.h5")
-print("✅ Optimized model saved as model_optimized.h5")
+model.save(MODEL_OPTIMIZED_PATH)
+print("✅ Optimized model saved as model_optimized_1.h5")
 
 # 📊 Plot Training Results
 plt.figure(figsize=(10, 4))
@@ -118,5 +140,6 @@ fine_tune_history = model.fit(
     epochs=10
 )
 
-model.save("model_finetuned.h5")
-print("🎯 Fine-tuned model saved as model_finetuned.h5")
+MODEL_FINETUNED_PATH = os.path.join(MODEL_DIR, "model_finetuned_1.h5")  
+model.save(MODEL_FINETUNED_PATH)
+print("🎯 Fine-tuned model saved as model_finetuned_1.h5")

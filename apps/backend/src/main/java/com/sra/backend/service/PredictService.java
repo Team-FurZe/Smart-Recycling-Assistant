@@ -14,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.util.HashMap;   // ✅ NEW
 import java.util.List;
 import java.util.Map;
 
@@ -45,18 +46,52 @@ public class PredictService {
       throw new RuntimeException("AI service error");
     }
 
-    String label = String.valueOf(resp.getBody().get("class"));
-    double confidence = Double.parseDouble(String.valueOf(resp.getBody().get("confidence")));
-    String binColor = String.valueOf(resp.getBody().get("bin_color"));
+    // 🔹 Cevabı daha rahat okumak için cast edelim
+    @SuppressWarnings("unchecked")
+    Map<String, Object> respBody = resp.getBody();
 
-    // 2) DB'ye kaydet
+    // 🔹 Temel alanlar
+    String label = String.valueOf(respBody.get("class"));
+
+    Object confidenceObj = respBody.get("confidence");
+    double confidence = confidenceObj != null
+        ? Double.parseDouble(String.valueOf(confidenceObj))
+        : 0.0;
+
+    Object binColorObj = respBody.get("bin_color");
+    String binColor = binColorObj != null
+        ? String.valueOf(binColorObj)
+        : null; // no_waste / uncertain durumunda null olabilir
+
+    // 🔹 NEW: probabilities alanını oku
+    Map<String, Double> probabilities = new HashMap<>();
+
+    Object probsObj = respBody.get("probabilities");
+    if (probsObj instanceof Map<?, ?> probsMap) {
+      for (Map.Entry<?, ?> entry : probsMap.entrySet()) {
+        String key = String.valueOf(entry.getKey());
+        Object value = entry.getValue();
+
+        if (value instanceof Number num) {
+          probabilities.put(key, num.doubleValue());
+        } else if (value != null) {
+          try {
+            probabilities.put(key, Double.parseDouble(value.toString()));
+          } catch (NumberFormatException ignored) {
+            // parse edemezsek o key'i atlıyoruz
+          }
+        }
+      }
+    }
+
+    // 2) DB'ye kaydet (şimdilik sadece temel bilgiler)
     var p = new Prediction();
     p.setLabel(label);
     p.setConfidence(confidence);
     p.setBinColor(binColor);
     repo.save(p);
 
-
+    // 3) Basit tips mantığı
     List<String> tips = switch (label) {
       case "plastic" -> List.of("Rinse bottles", "Remove caps if required");
       case "paper" -> List.of("Keep dry", "No greasy paper");
@@ -66,7 +101,8 @@ public class PredictService {
       default -> List.of("Check local rules");
     };
 
-    return new PredictResponse(label, confidence, binColor, tips);
+    // 4) PredictResponse'e probabilities'i de ekleyerek dön
+    return new PredictResponse(label, confidence, binColor, tips, probabilities);
   }
 
   // MultipartFile'i RestTemplate'e InputStreamResource olarak sarmalayan yardımcı sınıf

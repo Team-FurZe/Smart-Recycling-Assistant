@@ -80,7 +80,7 @@ $env:AI_URL = "http://localhost:8000"
 ./mvnw spring-boot:run    
 
 
-mvnw.cmd clean install #first time for windows
+./mvnw.cmd clean install #first time for windows
 
 ```
 
@@ -128,7 +128,7 @@ npm run dev
 
 ```bash
 cd apps/mobile
-npm install
+npm install expo
 npx expo install expo-image-picker
 npm run start
 ```

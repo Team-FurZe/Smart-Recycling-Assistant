@@ -83,41 +83,53 @@ async def predict(file: UploadFile = File(...)):
 
         # 🔹 Predict
         preds = model.predict(img_array)
-        probs = preds[0]
+        probs = preds[0]  # shape: (num_classes,)
+
+        # 🔹 Build probabilities dict for all classes
+        probabilities = {
+            CLASS_NAMES[i]: float(probs[i])
+            for i in range(len(CLASS_NAMES))
+        }
+
+        # 🔹 Get top prediction
         confidence_max = float(np.max(probs))
         predicted_index = int(np.argmax(probs))
         predicted_class = CLASS_NAMES[predicted_index]
 
-        # 1) Eğer model açıkça "no_waste" dediyse:
+        # 1) If model clearly predicts "no_waste"
         if predicted_class == "no_waste":
             return JSONResponse({
                 "detected": False,
                 "class": "no_waste",
                 "message": "Bu görüntüde belirgin bir çöp algılamadım.",
-                "confidence": round(confidence_max, 3)
+                "confidence": round(confidence_max, 3),
+                "probabilities": probabilities  # ✅ NEW
             })
 
-        # 2) Eğer model kararsızsa (düşük güven):
+        # 2) If model is uncertain (low confidence)
         if confidence_max < THRESHOLD:
             return JSONResponse({
                 "detected": False,
                 "class": "uncertain",
                 "message": "Burada belirgin bir çöp algılayamadım (model emin değil).",
-                "confidence": round(confidence_max, 3)
+                "confidence": round(confidence_max, 3),
+                "probabilities": probabilities  # ✅ NEW
             })
 
-        # 3) Normal durumda: çöp ve türü tespit edildi
+        # 3) Normal case: detected a waste type
         bin_color = BIN_COLORS.get(predicted_class, "unknown")
 
         return JSONResponse({
             "detected": True,
             "class": predicted_class,
             "confidence": round(confidence_max, 3),
-            "bin_color": bin_color
+            "bin_color": bin_color,
+            "probabilities": probabilities  # ✅ NEW
         })
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 # 🔹 Run with: uvicorn main:app --host 0.0.0.0 --port 8000 --reload

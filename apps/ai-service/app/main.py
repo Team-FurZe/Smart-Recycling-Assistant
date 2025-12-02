@@ -29,7 +29,7 @@ MODEL_PATH = "models/ai-model-1/model_finetuned_1.h5"
 CLASS_INDICES_PATH = "models/src/class_indices.json"
 
 # 🔹 Confidence threshold (opsiyonel, yedek mekanizma)
-THRESHOLD = 0.6  # istersen sonra 0.5 / 0.7 diye ayarlarsın
+THRESHOLD = 0.5  # istersen sonra 0.5 / 0.7 diye ayarlarsın
 
 # 🔹 Load class indices and build CLASS_NAMES list dynamically
 # class_indices: {"battery": 0, "biological": 1, ..., "no_waste": 6, ...}

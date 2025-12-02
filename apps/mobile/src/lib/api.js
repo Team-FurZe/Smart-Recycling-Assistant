@@ -1,4 +1,4 @@
-const BACKEND_URL = "http://192.168.1.199:8080"; // <-- kendi LAN IP’ni yaz
+const BACKEND_URL = "http://172.31.192.1:8080"; // <-- kendi LAN IP’ni yaz
 const PREDICT_URL = `${BACKEND_URL}/api/v1/predict`;
 
 // 10 sn timeout'lu fetch helper

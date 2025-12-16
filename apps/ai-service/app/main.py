@@ -25,7 +25,7 @@ def health_check():
 # 🔹 Model and class labels
 # 👉 Burayı kendi model dosyana göre ayarla:
 # Örn: "models/ai-model-1/model_finetuned.h5" ya da "models/ai-model-1/model_2.h5"
-MODEL_PATH = "models/ai-model-1/model_finetuned_1.h5"
+MODEL_PATH = "old_models/ai-model-1/model_finetuned_1.h5"
 CLASS_INDICES_PATH = "models/src/class_indices.json"
 
 # 🔹 Confidence threshold (opsiyonel, yedek mekanizma)

@@ -64,6 +64,14 @@ if not MODEL_PATH.exists():
 
 model = YOLO(str(MODEL_PATH))
 
+# ---------------------------------------------------
+# Detection thresholds
+# ---------------------------------------------------
+# Increase CONF_THRESH to reduce false positives (and show NO_WASTE more often)
+# Decrease CONF_THRESH to detect more objects (but may include more false positives)
+CONF_THRESH = 0.35
+IOU_THRESH = 0.60
+
 
 # ---------------------------------------------------
 # FastAPI app (separate YOLO app)
@@ -108,20 +116,26 @@ async def predict_yolo(file: UploadFile = File(...)):
     image_np = np.array(image)
 
     # 3) Run YOLO prediction
+    # conf + iou thresholds help reduce false positives
     results = model.predict(
         source=image_np,
         device=device,
-        verbose=False,  # do not spam logs
+        verbose=False,
+        conf=CONF_THRESH,
+        iou=IOU_THRESH,
     )[0]  # single image
 
     detections = []
 
     # 4) Parse YOLO boxes
     for box in results.boxes:
+        conf = float(box.conf[0])
+        if conf < CONF_THRESH:
+            continue
+
         # xyxy -> [x1, y1, x2, y2]
         x1, y1, x2, y2 = box.xyxy[0].tolist()
         cls_id = int(box.cls[0])
-        conf = float(box.conf[0])
 
         if 0 <= cls_id < len(CLASS_NAMES):
             label = CLASS_NAMES[cls_id]
@@ -150,9 +164,11 @@ async def predict_yolo(file: UploadFile = File(...)):
     for idx, det in enumerate(detections, start=1):
         det["id"] = f"{idx:02d}"
 
+    # 7) NO_WASTE behavior
     response = {
         "imageWidth": image.width,
         "imageHeight": image.height,
+        "noWaste": len(detections) == 0,
         "detections": detections,
     }
 

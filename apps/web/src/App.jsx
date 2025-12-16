@@ -1,25 +1,75 @@
-import React, { useState } from "react";
-import { predictImage } from "./lib/api";
+import React, { useMemo, useState } from "react";
+import { predictYolo } from "./lib/api";
+import ImageWithDetections from "./components/ImageWithDetections";
+import DetectionsList from "./components/DetectionsList";
+
+const BIN_COLORS = {
+  BIODEGRADABLE: "#8BC34A",
+  CARDBOARD: "#A1887F",
+  GLASS: "#4CAF50",
+  METAL: "#9E9E9E",
+  PAPER: "#2196F3",
+  PLASTIC: "#FFC107",
+};
+
+function binColorOf(label) {
+  return BIN_COLORS[label] || "#FFFFFF";
+}
+
+// bbox crop -> File
+async function cropFileFromBBox(originalFile, bbox) {
+  const bitmap = await createImageBitmap(originalFile);
+
+  const sx = Math.max(0, Math.floor(bbox.x));
+  const sy = Math.max(0, Math.floor(bbox.y));
+  const sw = Math.max(1, Math.floor(bbox.width));
+  const sh = Math.max(1, Math.floor(bbox.height));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = sw;
+  canvas.height = sh;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, sw, sh);
+
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.95));
+  if (!blob) throw new Error("Crop failed");
+
+  return new File([blob], "crop.jpg", { type: "image/jpeg" });
+}
 
 export default function App() {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+
+  // YOLO result: { imageWidth, imageHeight, noWaste, detections: [...] }
   const [result, setResult] = useState(null);
+
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Keeps track of labels the user said are wrong
-  const [excludedLabels, setExcludedLabels] = useState([]);
+  // Try-again sonucu farklı çıkarsa override ediyoruz
+  const [overrides, setOverrides] = useState({});
+  // Aynı objede tekrar tekrar aynı label'e düşmesin diye
+  const [triedById, setTriedById] = useState({});
+  const [retryStateById, setRetryStateById] = useState({});
+
+  const viewDetections = useMemo(() => {
+    if (!result?.detections) return [];
+    return result.detections.map((d) => {
+      const label = overrides[d.id] || d.label;
+      return { ...d, label, binColor: binColorOf(label) };
+    });
+  }, [result, overrides]);
 
   function handleFileChange(e) {
     const selected = e.target.files?.[0] || null;
     setFile(selected);
-
-    // reset previous result & excluded labels when a new file is selected
     setResult(null);
-    setExcludedLabels([]);
+    setOverrides({});
+    setTriedById({});
+    setRetryStateById({});
 
     if (selected) {
-      // Revoke old URL if exists
       setPreviewUrl((prev) => {
         if (prev) URL.revokeObjectURL(prev);
         return URL.createObjectURL(selected);
@@ -35,150 +85,143 @@ export default function App() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!file) return;
+
     setLoading(true);
     try {
-      const prediction = await predictImage(file);
+      const yoloRes = await predictYolo(file);
+      setResult(yoloRes);
 
-      // Reset excluded labels for a fresh prediction
-      setExcludedLabels([]);
-
-      // Store full prediction including probabilities
-      setResult(prediction);
+      // yeni predict'te sıfırla
+      setOverrides({});
+      setTriedById({});
+      setRetryStateById({});
     } catch (e) {
-      alert(e.message || "Predict error");
+      alert(e.message || "YOLO Predict error");
     } finally {
       setLoading(false);
     }
   }
 
-  // 🔹 Feedback handler: try another category without excluded ones
-  function handleFeedback() {
-    if (!result || !result.probabilities) return;
-
-    const currentLabel = result.label;
-
-    // 1) Update excluded labels (include current label)
-    const updatedExcluded = [...excludedLabels];
-    if (!updatedExcluded.includes(currentLabel)) {
-      updatedExcluded.push(currentLabel);
-    }
-
-    // 2) Build candidate list from probabilities excluding these labels
-    const entries = Object.entries(result.probabilities);
-
-    const candidates = entries
-      .filter(([label]) => !updatedExcluded.includes(label))
-      .sort((a, b) => b[1] - a[1]); // sort desc by probability
-
-    if (candidates.length === 0) {
-      // No more categories left to suggest
-      setExcludedLabels(updatedExcluded);
-      alert(
-        "No other categories left to suggest. Please select the correct category manually."
-      );
-      return;
-    }
-
-    // 3) Pick next best candidate
-    const [nextLabel, nextProb] = candidates[0];
-
-    // 4) Update state
-    setExcludedLabels(updatedExcluded);
-
-    setResult((prev) => ({
-      ...prev,
-      label: nextLabel,
-      confidence: nextProb,
-    }));
+  function addTried(id, label) {
+    setTriedById((prev) => {
+      const arr = prev[id] ? [...prev[id]] : [];
+      if (!arr.includes(label)) arr.push(label);
+      return { ...prev, [id]: arr };
+    });
   }
 
-  const hasProbabilities =
-    result && result.probabilities && Object.keys(result.probabilities).length > 0;
+  async function onTryAgain(det) {
+    if (!file) return;
+
+    setRetryStateById((prev) => ({ ...prev, [det.id]: { loading: true, message: "" } }));
+
+    try {
+      const cropFile = await cropFileFromBBox(file, det.bbox);
+      const cropRes = await predictYolo(cropFile);
+
+      const currentLabel = overrides[det.id] || det.label;
+      const tried = triedById[det.id] || [];
+
+      // crop sonucunda detection yoksa:
+      if (cropRes?.noWaste || !cropRes?.detections?.length) {
+        setRetryStateById((prev) => ({
+          ...prev,
+          [det.id]: { loading: false, message: "Try again: no detection found on crop." },
+        }));
+        return;
+      }
+
+      // crop sonuçlarından "farklı" bir label bulmaya çalış
+      const candidates = cropRes.detections;
+      const firstDifferent = candidates.find((c) => c.label !== currentLabel && !tried.includes(c.label));
+
+      if (!firstDifferent) {
+        const fallback = candidates[0]?.label;
+        if (fallback) addTried(det.id, fallback);
+
+        setRetryStateById((prev) => ({
+          ...prev,
+          [det.id]: { loading: false, message: "Try again: different result not found (same as before)." },
+        }));
+        return;
+      }
+
+      const newLabel = firstDifferent.label;
+      addTried(det.id, newLabel);
+      setOverrides((prev) => ({ ...prev, [det.id]: newLabel }));
+
+      setRetryStateById((prev) => ({
+        ...prev,
+        [det.id]: { loading: false, message: `Updated to: ${newLabel}` },
+      }));
+    } catch (e) {
+      setRetryStateById((prev) => ({
+        ...prev,
+        [det.id]: { loading: false, message: `Error: ${e.message || e}` },
+      }));
+    }
+  }
 
   return (
-    <div style={{ maxWidth: 560, margin: "40px auto", padding: 16 }}>
-      <h2>Smart Recycle Assistant (Web)</h2>
+    <div style={{ maxWidth: 760, margin: "40px auto", padding: 16 }}>
+      <h2>Smart Recycle Assistant (Web) — YOLO</h2>
 
-      {/* 🔹 Preview area – under title, above file input */}
       {previewUrl && (
-        <div
-          style={{
-            margin: "16px 0 24px",
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
-          <img
-            src={previewUrl}
-            alt="Selected preview"
-            style={{
-              maxWidth: "100%",
-              maxHeight: 320,
-              borderRadius: 8,
-              border: "1px solid #ddd",
-              objectFit: "contain",
-            }}
-          />
+        <div style={{ margin: "16px 0 16px", display: "flex", justifyContent: "center" }}>
+          {!result ? (
+            <img
+              src={previewUrl}
+              alt="Selected preview"
+              style={{
+                maxWidth: "100%",
+                maxHeight: 420,
+                borderRadius: 8,
+                border: "1px solid #ddd",
+                objectFit: "contain",
+              }}
+            />
+          ) : (
+            <ImageWithDetections
+              imageUrl={previewUrl}
+              detections={viewDetections}
+              imageWidth={result.imageWidth}
+              imageHeight={result.imageHeight}
+            />
+          )}
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
         <input type="file" accept="image/*" onChange={handleFileChange} />
         <button type="submit" disabled={!file || loading} style={{ marginLeft: 12 }}>
-          {loading ? "Predicting..." : "Predict"}
+          {loading ? "Predicting..." : "Predict (YOLO)"}
         </button>
       </form>
 
-      {result && (
+      {/* ✅ NO_WASTE banner */}
+      {result?.noWaste && (
         <div
           style={{
             marginTop: 16,
             padding: 12,
+            borderRadius: 12,
             border: "1px solid #ddd",
-            borderRadius: 8,
+            background: "#fafafa",
+            fontWeight: 800,
           }}
         >
-          <h4 style={{ margin: 0, marginBottom: 8 }}>Result</h4>
-          <div>Label: {result.label}</div>
-          <div>
-            Confidence: {(result.confidence * 100).toFixed(2)}
-            %
-          </div>
-          <div>Bin Color: {result.binColor}</div>
+          NO_WASTE — No detectable waste found in this image.
+        </div>
+      )}
 
-          {/* 🔹 Optional: show excluded labels info */}
-          {excludedLabels.length > 0 && (
-            <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
-              Ignored categories: {excludedLabels.join(", ")}
-            </div>
-          )}
+      {/* detections varsa listeyi göster */}
+      {result && !result.noWaste && (
+        <div style={{ marginTop: 16 }}>
+          <h4 style={{ margin: 0, marginBottom: 8 }}>
+            Detections ({Array.isArray(viewDetections) ? viewDetections.length : 0})
+          </h4>
 
-          {/* 🔹 Feedback button */}
-          {hasProbabilities && (
-            <button
-              type="button"
-              onClick={handleFeedback}
-              style={{
-                marginTop: 12,
-                padding: "6px 10px",
-                fontSize: 14,
-                cursor: "pointer",
-              }}
-            >
-              This prediction looks wrong, try another
-            </button>
-          )}
-
-          {Array.isArray(result.tips) && result.tips.length > 0 && (
-            <>
-              <div style={{ marginTop: 8, fontWeight: 600 }}>Tips</div>
-              <ul style={{ marginTop: 6 }}>
-                {result.tips.map((t, i) => (
-                  <li key={i}>{t}</li>
-                ))}
-              </ul>
-            </>
-          )}
+          <DetectionsList detections={viewDetections} retryStateById={retryStateById} onTryAgain={onTryAgain} />
         </div>
       )}
     </div>

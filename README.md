@@ -37,13 +37,17 @@ docker compose ps           # sra-postgres Up olmalı
 cd apps/ai-service
 python -m venv .venv    # İlk kez çalıştırırken
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install fastapi uvicorn python-multipart    # Not necessery after installed once
+pip install fastapi uvicorn tensorflow numpy matplotlib scipy Pillow python-multipart
+    # Not necessery after installed once
 
 cd app
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 or
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 uvicorn app.main:app --reload --port 8000   # Old version
+
+#yolo
+uvicorn app.main_yolo:app --reload --port 8001
 ```
 
 **Sağlık kontrolü:**
@@ -51,6 +55,7 @@ uvicorn app.main:app --reload --port 8000   # Old version
 ```bash
 curl http://localhost:8000/health
 # {"status":"ok"}
+curl http://localhost:8001/yolo/health
 ```
 
 ---
@@ -60,10 +65,27 @@ curl http://localhost:8000/health
 Yeni bir terminal aç:
 
 ```bash
+cd apps/backend
+
+# For MAC
 export PG_HOST=localhost PG_PORT=5432 PG_DB=sra PG_USER=sra_user PG_PASS=sra_pass
 export AI_URL=http://localhost:8000
-cd apps/backend
-./mvnw spring-boot:run
+
+# For Windows
+$env:PG_HOST = "localhost"
+$env:PG_PORT = "5432"
+$env:PG_DB   = "sra"
+$env:PG_USER = "sra_user"
+$env:PG_PASS = "sra_pass"
+$env:AI_URL = "http://localhost:8000"
+
+
+# Both
+./mvnw spring-boot:run    
+
+
+./mvnw.cmd clean install #first time for windows
+
 ```
 
 **Sağlık kontrolü:**
@@ -110,7 +132,7 @@ npm run dev
 
 ```bash
 cd apps/mobile
-npm install
+npm install expo
 npx expo install expo-image-picker
 npm run start
 ```

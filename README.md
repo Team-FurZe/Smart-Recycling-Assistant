@@ -45,6 +45,9 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 or
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 uvicorn app.main:app --reload --port 8000   # Old version
+
+#yolo
+uvicorn app.main_yolo:app --reload --port 8001
 ```
 
 **Sağlık kontrolü:**
@@ -52,6 +55,7 @@ uvicorn app.main:app --reload --port 8000   # Old version
 ```bash
 curl http://localhost:8000/health
 # {"status":"ok"}
+curl http://localhost:8001/yolo/health
 ```
 
 ---

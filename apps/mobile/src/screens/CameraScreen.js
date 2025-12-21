@@ -1,25 +1,44 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
   Button,
-  Image,
   ActivityIndicator,
   StyleSheet,
   Alert,
   ScrollView,
+  ImageBackground,
+  Pressable,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
-import { predictImageFromUri } from "../lib/api"; // BACKEND_URL burada yönetiliyor
+import { predictYoloFromUri } from "../lib/api"; // ✅ YOLO
+
+// (Opsiyonel) Eğer override label değişince binColor da değişsin istersen:
+const BIN_COLORS = {
+  BIODEGRADABLE: "#8BC34A",
+  CARDBOARD: "#A1887F",
+  GLASS: "#4CAF50",
+  METAL: "#9E9E9E",
+  PAPER: "#2196F3",
+  PLASTIC: "#FFC107",
+};
+function binColorOf(label) {
+  return BIN_COLORS[label] || "#FFFFFF";
+}
 
 export default function CameraScreen() {
-  const [imageUri, setImageUri] = useState(null);
-  const [result, setResult] = useState(null);
+  const [sourceUri, setSourceUri] = useState(null);   // seçilen/çekilen orijinal
+  const [predictUri, setPredictUri] = useState(null); // ✅ YOLO'ya gönderdiğimiz (optimize edilmiş) uri
+
+  const [result, setResult] = useState(null); // { imageWidth, imageHeight, noWaste, detections }
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Labels that user said are wrong
-  const [excludedLabels, setExcludedLabels] = useState([]);
+  const [retryStateById, setRetryStateById] = useState({}); // { "01": {loading,message} }
+  const [overrides, setOverrides] = useState({});           // { "01": "GLASS" }
+  const [triedById, setTriedById] = useState({});           // { "01": ["PAPER","METAL"] }
+
+  const [layout, setLayout] = useState({ w: 1, h: 1 });
 
   async function pickFromGallery() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -31,9 +50,13 @@ export default function CameraScreen() {
       quality: 1,
     });
     if (!r.canceled) {
-      setImageUri(r.assets[0].uri);
+      const uri = r.assets[0].uri;
+      setSourceUri(uri);
+      setPredictUri(null);
       setResult(null);
-      setExcludedLabels([]); // reset feedback state
+      setRetryStateById({});
+      setOverrides({});
+      setTriedById({});
     }
   }
 
@@ -47,9 +70,13 @@ export default function CameraScreen() {
       base64: false,
     });
     if (!r.canceled) {
-      setImageUri(r.assets[0].uri);
+      const uri = r.assets[0].uri;
+      setSourceUri(uri);
+      setPredictUri(null);
       setResult(null);
-      setExcludedLabels([]); // reset feedback state
+      setRetryStateById({});
+      setOverrides({});
+      setTriedById({});
     }
   }
 
@@ -58,25 +85,33 @@ export default function CameraScreen() {
     try {
       const manipulated = await ImageManipulator.manipulateAsync(
         uri,
-        [{ resize: { width: 1024 } }], // height otomatik orantılanır
+        [{ resize: { width: 1024 } }],
         { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
       );
       return manipulated.uri;
     } catch (e) {
-      // Optimizasyon başarısızsa orijinali gönder
       return uri;
     }
   }
 
   async function predict() {
-    if (!imageUri)
+    if (!sourceUri) {
       return Alert.alert("No image", "Pick or take a photo first.");
+    }
     try {
       setLoading(true);
-      const optimizedUri = await optimizeImage(imageUri);
-      const data = await predictImageFromUri(optimizedUri);
+
+      // ✅ ÖNEMLİ: bbox koordinatları doğru olsun diye
+      // YOLO'ya gönderdiğimiz optimize edilmiş uri'yi hem saklıyoruz hem de görüntülüyoruz.
+      const optimizedUri = await optimizeImage(sourceUri);
+      setPredictUri(optimizedUri);
+
+      const data = await predictYoloFromUri(optimizedUri);
       setResult(data);
-      setExcludedLabels([]); // new prediction, clear previous excluded labels
+
+      setRetryStateById({});
+      setOverrides({});
+      setTriedById({});
     } catch (e) {
       Alert.alert("Prediction error", e.message ?? "Unknown error");
     } finally {
@@ -84,53 +119,108 @@ export default function CameraScreen() {
     }
   }
 
-  // 🔹 Feedback: try another label without excluded ones
-  function handleFeedback() {
-    if (!result || !result.probabilities) return;
-
-    const currentLabel = result.label;
-
-    // 1) Update excluded list
-    const updatedExcluded = excludedLabels.includes(currentLabel)
-      ? excludedLabels
-      : [...excludedLabels, currentLabel];
-
-    // 2) Build candidates from probabilities excluding these labels
-    const entries = Object.entries(result.probabilities);
-
-    const candidates = entries
-      .filter(([label]) => !updatedExcluded.includes(label))
-      .sort((a, b) => b[1] - a[1]); // sort desc by probability
-
-    if (candidates.length === 0) {
-      setExcludedLabels(updatedExcluded);
-      Alert.alert(
-        "No more categories",
-        "No other categories left to suggest. Please select the correct one manually."
-      );
-      return;
-    }
-
-    // 3) Pick next best
-    const [nextLabel, nextProb] = candidates[0];
-
-    // 4) Update state
-    setExcludedLabels(updatedExcluded);
-    setResult((prev) =>
-      prev
-        ? {
-            ...prev,
-            label: nextLabel,
-            confidence: nextProb,
-          }
-        : prev
-    );
+  function addTried(id, label) {
+    setTriedById((prev) => {
+      const arr = prev[id] ? [...prev[id]] : [];
+      if (!arr.includes(label)) arr.push(label);
+      return { ...prev, [id]: arr };
+    });
   }
 
-  const hasProbabilities =
-    result &&
-    result.probabilities &&
-    Object.keys(result.probabilities).length > 0;
+  async function cropByBBox(uri, bbox) {
+    const crop = {
+      originX: Math.max(0, Math.floor(bbox.x)),
+      originY: Math.max(0, Math.floor(bbox.y)),
+      width: Math.max(1, Math.floor(bbox.width)),
+      height: Math.max(1, Math.floor(bbox.height)),
+    };
+
+    const out = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ crop }],
+      { compress: 0.95, format: ImageManipulator.SaveFormat.JPEG }
+    );
+
+    return out.uri;
+  }
+
+  async function onTryAgain(det) {
+    if (!predictUri) return;
+
+    setRetryStateById((prev) => ({
+      ...prev,
+      [det.id]: { loading: true, message: "" },
+    }));
+
+    try {
+      const cropUri = await cropByBBox(predictUri, det.bbox);
+      const cropRes = await predictYoloFromUri(cropUri);
+
+      const currentLabel = overrides[det.id] || det.label;
+      const tried = triedById[det.id] || [];
+
+      if (cropRes?.noWaste || !cropRes?.detections?.length) {
+        setRetryStateById((prev) => ({
+          ...prev,
+          [det.id]: { loading: false, message: "Try again: no detection found on crop." },
+        }));
+        return;
+      }
+
+      const candidates = cropRes.detections;
+      const firstDifferent = candidates.find(
+        (c) => c.label !== currentLabel && !tried.includes(c.label)
+      );
+
+      if (!firstDifferent) {
+        const fallback = candidates[0]?.label;
+        if (fallback) addTried(det.id, fallback);
+
+        setRetryStateById((prev) => ({
+          ...prev,
+          [det.id]: { loading: false, message: "Try again: different result not found (same as before)." },
+        }));
+        return;
+      }
+
+      const newLabel = firstDifferent.label;
+      addTried(det.id, newLabel);
+
+      setOverrides((prev) => ({ ...prev, [det.id]: newLabel }));
+      setRetryStateById((prev) => ({
+        ...prev,
+        [det.id]: { loading: false, message: `Updated to: ${newLabel}` },
+      }));
+    } catch (e) {
+      setRetryStateById((prev) => ({
+        ...prev,
+        [det.id]: { loading: false, message: `Error: ${e.message || e}` },
+      }));
+    }
+  }
+
+  const viewDetections = useMemo(() => {
+    const base = result?.detections || [];
+    return base.map((d) => {
+      const newLabel = overrides[d.id];
+      if (!newLabel) return d;
+
+      return {
+        ...d,
+        label: newLabel,
+        binColor: binColorOf(newLabel), // ✅ override olunca renk de değişsin
+      };
+    });
+  }, [result, overrides]);
+
+  const imageW = result?.imageWidth || 1;
+  const imageH = result?.imageHeight || 1;
+
+  const scale = useMemo(() => {
+    return { sx: layout.w / imageW, sy: layout.h / imageH };
+  }, [layout, imageW, imageH]);
+
+  const shownUri = predictUri || sourceUri;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -142,52 +232,122 @@ export default function CameraScreen() {
         <Button title="Take Photo" onPress={takePhoto} />
       </View>
 
-      {imageUri && (
-        <Image
-          source={{ uri: imageUri }}
-          style={styles.preview}
-          resizeMode="cover"
-        />
+      {shownUri && (
+        <View
+          style={{ marginTop: 16 }}
+          onLayout={(e) => {
+            const { width } = e.nativeEvent.layout;
+            const ratio = imageW / imageH; // width/height
+            const height = width / ratio;
+            setLayout({ w: width, h: height });
+          }}
+        >
+          {/* ✅ aspect ratio'yu server'dan gelen imageWidth/imageHeight ile sabitliyoruz.
+              Böylece bbox overlay doğru oturuyor (letterbox/padding yok). */}
+          <ImageBackground
+            source={{ uri: shownUri }}
+            style={{
+              width: "100%",
+              height: layout.h,
+              borderRadius: 12,
+              overflow: "hidden",
+              backgroundColor: "#000",
+            }}
+            resizeMode="stretch"
+          >
+            {/* Boxes overlay */}
+            {(viewDetections || []).map((det) => {
+              const { x, y, width, height } = det.bbox;
+              const left = x * scale.sx;
+              const top = y * scale.sy;
+              const w = width * scale.sx;
+              const h = height * scale.sy;
+
+              return (
+                <View
+                  key={det.id}
+                  style={[
+                    styles.box,
+                    {
+                      left,
+                      top,
+                      width: w,
+                      height: h,
+                      borderColor: det.binColor,
+                    },
+                  ]}
+                  pointerEvents="none"
+                >
+                  <View style={[styles.badge, { backgroundColor: det.binColor }]}>
+                    <Text style={styles.badgeText}>{det.id}</Text>
+                  </View>
+                </View>
+              );
+            })}
+          </ImageBackground>
+        </View>
       )}
 
       <View style={{ height: 12 }} />
       <Button
         title={loading ? "Predicting..." : "Predict"}
         onPress={predict}
-        disabled={!imageUri || loading}
+        disabled={!sourceUri || loading}
       />
 
       <View style={{ height: 16 }} />
       {loading && <ActivityIndicator size="large" />}
 
-      {result && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Prediction</Text>
-          <Text>Label: {result.label}</Text>
-          <Text>
-            Confidence: {(result.confidence * 100).toFixed(2)}%
+      {/* NO_WASTE */}
+      {result?.noWaste && (
+        <View style={styles.noWasteCard}>
+          <Text style={styles.noWasteText}>NO_WASTE — No detectable waste found.</Text>
+        </View>
+      )}
+
+      {/* Detections list */}
+      {!result?.noWaste && Array.isArray(viewDetections) && viewDetections.length > 0 && (
+        <View style={{ marginTop: 16 }}>
+          <Text style={styles.sectionTitle}>
+            Detections ({viewDetections.length})
           </Text>
-          <Text>Bin Color: {result.binColor}</Text>
 
-          {excludedLabels.length > 0 && (
-            <Text style={styles.excludedText}>
-              Ignored categories: {excludedLabels.join(", ")}
-            </Text>
-          )}
+          {viewDetections.map((det) => {
+            const retry = retryStateById?.[det.id] || { loading: false, message: "" };
 
-          {hasProbabilities && (
-            <View style={{ marginTop: 8 }}>
-              <Button
-                title="This looks wrong, try another"
-                onPress={handleFeedback}
-              />
-            </View>
-          )}
+            return (
+              <View key={det.id} style={[styles.card, { borderColor: det.binColor }]}>
+                <View style={styles.cardRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>
+                      #{det.id} — {det.label}
+                    </Text>
+                    <Text style={styles.cardSub}>
+                      Confidence: {(det.confidence * 100).toFixed(1)}%
+                    </Text>
+                  </View>
 
-          {Array.isArray(result.tips) &&
-            result.tips.map((t, i) => (
-              <Text key={i}>• {t}</Text>
-            ))}
+                  <Pressable
+                    onPress={() => onTryAgain(det)}
+                    disabled={retry.loading}
+                    style={({ pressed }) => [
+                      styles.tryBtn,
+                      {
+                        borderColor: det.binColor,
+                        opacity: retry.loading ? 0.5 : pressed ? 0.8 : 1,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.tryBtnText}>
+                      {retry.loading ? "Trying..." : "Try again"}
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {!!retry.message && <Text style={styles.tryMsg}>{retry.message}</Text>}
+              </View>
+            );
+          })}
         </View>
       )}
     </ScrollView>
@@ -197,26 +357,61 @@ export default function CameraScreen() {
 const styles = StyleSheet.create({
   container: { padding: 16, alignItems: "stretch" },
   title: {
-    fontSize: 22,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "700",
     textAlign: "center",
     marginBottom: 16,
   },
   row: { flexDirection: "row", alignSelf: "center" },
-  preview: { marginTop: 16, width: "100%", height: 260, borderRadius: 12 },
-  card: {
+
+  box: {
+    position: "absolute",
+    borderWidth: 3,
+    borderRadius: 12,
+  },
+  badge: {
+    position: "absolute",
+    left: 6,
+    top: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  badgeText: {
+    fontWeight: "900",
+    fontSize: 12,
+    color: "#111",
+  },
+
+  noWasteCard: {
     marginTop: 16,
-    padding: 16,
+    padding: 14,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#ddd",
     backgroundColor: "#fff",
-    gap: 6,
   },
-  cardTitle: { fontWeight: "600", marginBottom: 4 },
-  excludedText: {
-    marginTop: 4,
-    fontSize: 12,
-    color: "#666",
+  noWasteText: { fontWeight: "800" },
+
+  sectionTitle: { fontWeight: "800", marginBottom: 10, fontSize: 16 },
+
+  card: {
+    marginBottom: 10,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 2,
+    backgroundColor: "#fff",
   },
+  cardRow: { flexDirection: "row", gap: 10, alignItems: "center" },
+  cardTitle: { fontWeight: "900", fontSize: 14 },
+  cardSub: { marginTop: 2, color: "#555", fontSize: 12 },
+
+  tryBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  tryBtnText: { fontWeight: "800" },
+  tryMsg: { marginTop: 8, color: "#555", fontSize: 12 },
 });

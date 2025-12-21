@@ -117,6 +117,9 @@ export default function CameraScreen() {
     } finally {
       setLoading(false);
     }
+    console.log("sourceUri:", sourceUri);
+    console.log("predictUri:", optimizedUri);
+
   }
 
   function addTried(id, label) {

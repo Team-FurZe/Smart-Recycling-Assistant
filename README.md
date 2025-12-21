@@ -48,9 +48,11 @@ uvicorn app.main:app --reload --port 8000   # Old version
 
 #yolo
 cd app
-uvicorn main_yolo:app --reload --port 8001
+uvicorn main_yolo:app --host 0.0.0.0 --port 8001 --reload
+
 or
-uvicorn app.main_yolo:app --reload --port 8001
+uvicorn app.main_yolo:app --host 0.0.0.0 --port 8001 --reload
+
 ```
 
 **Sağlık kontrolü:**

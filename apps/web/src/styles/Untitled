@@ -1,0 +1,28 @@
+:root {
+  --container: 1200px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.sra-container {
+  width: min(var(--container), calc(100% - 40px));
+  margin: 0 auto;
+}
+
+/* Page background: earth-like vibe (image ile de destekleyeceğiz) */
+.sra-page {
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 10%, #1b3a57, #060a12 60%);
+  color: white;
+}
+
+/* Header fixed olduğu için üst boşluk */
+.sra-offset-top {
+  padding-top: 72px;
+}

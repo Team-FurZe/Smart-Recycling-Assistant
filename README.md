@@ -47,6 +47,9 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 uvicorn app.main:app --reload --port 8000   # Old version
 
 #yolo
+cd app
+uvicorn main_yolo:app --reload --port 8001
+or
 uvicorn app.main_yolo:app --reload --port 8001
 ```
 
@@ -81,7 +84,7 @@ $env:AI_URL = "http://localhost:8000"
 
 
 # Both
-./mvnw spring-boot:run    
+mvnw spring-boot:run    
 
 
 ./mvnw.cmd clean install #first time for windows

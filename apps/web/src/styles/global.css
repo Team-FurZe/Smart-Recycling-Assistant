@@ -1,0 +1,141 @@
+:root {
+    --header-height: 72px;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: var(--header-height);
+  }
+  
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background: #060a12;
+    color: #ffffff;
+  }
+  
+  /* -----------------------------------
+     BITES-like background (image + overlays)
+  ----------------------------------- */
+  
+  /* background image */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+  
+    background-image: url("/backgrounds/space-earth.jpg");
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  
+    transform: scale(1.03);
+    filter: saturate(1.05) contrast(1.05);
+  }
+  
+  /* dark veil + glow */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  
+    background:
+      radial-gradient(900px 500px at 50% 30%, rgba(80, 180, 255, 0.18), transparent 60%),
+      rgba(6, 10, 18, 0.84),
+      radial-gradient(1200px 800px at 50% 40%, rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.65));
+  }
+  
+  /* IMPORTANT: keep app above background layers */
+  #root,
+  .app-shell {
+    position: relative;
+    z-index: 0;
+  }
+  
+  /* Layout shell: footer always at bottom */
+  .app-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Navbar fixed -> push content down */
+  .app-main {
+    padding-top: var(--header-height);
+    flex: 1;
+  }
+  
+  /* centered content width */
+  .page-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 32px;
+  }
+  
+  /* No box/frame: you didn't want panels */
+  .content-panel {
+    background: none;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+  }
+  
+  /* Make text readable without boxes */
+  .page-container,
+  .page-container * {
+    color: rgba(255, 255, 255, 0.92);
+  }
+  
+  .page-container h1,
+  .page-container h2,
+  .page-container h3 {
+    color: #ffffff;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+  }
+  
+  .page-container p,
+  .page-container a,
+  .page-container label,
+  .page-container small {
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+  }
+  
+  /* Links */
+  .page-container a {
+    color: rgba(180, 220, 255, 0.95);
+    text-decoration: none;
+  }
+  
+  .page-container a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Anchor sections shouldn't hide under navbar */
+  section[id] {
+    scroll-margin-top: var(--header-height);
+  }
+  
+  /* Reset button: black text */
+  .btn-reset {
+    color: #0b0f16 !important;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  
+  .btn-reset:hover {
+    background: rgba(255, 255, 255, 0.92);
+  }
+  

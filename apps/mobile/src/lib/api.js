@@ -1,6 +1,6 @@
 import * as FileSystem from "expo-file-system/legacy";
 
-const YOLO_URL = "http://172.16.1.172:8001";
+const YOLO_URL = "http://192.168.1.100:8001";
 const YOLO_PREDICT_URL = `${YOLO_URL}/yolo/predict`;
 
 export async function predictYoloFromUri(uri) {

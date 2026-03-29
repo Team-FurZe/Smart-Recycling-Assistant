@@ -72,7 +72,6 @@ def get_paths():
         "runs_dir": runs_dir,
     }
 
-
 def train_yolo():
     paths = get_paths()
     data_yaml = paths["data_yaml"]
@@ -92,15 +91,21 @@ def train_yolo():
     print(f"Using device: {device}")
 
     # Load base YOLO model (smallest, fastest variant)
-    model = YOLO("yolov8n.pt")
+    model = YOLO("yolo11n.pt")
 
     # Train
     results = model.train(
         data=str(data_yaml),
         epochs=50,           # you can change this (e.g. 30)
         imgsz=640,
+        batch=16
+        patience=20,
+        lr0=0.001,
+        mosaic=0.5,
+        mixup=0.0,
+        copy_paste=0.0,
         project=str(runs_dir),
-        name="v1",
+        name="v3",
         device=device,
     )
 

@@ -1,6 +1,25 @@
 # Smart-Recycling-Assistant
+A project about smart recycling.
+Süper—artık “tek seferlik kurulum” ve “her başlatışta” yapacakların net bir akışta olsun. Aşağıdaki adımları uygula; komutları olduğu gibi kopyalayabilirsin.
 
-# 1) Veritabanı (Docker) — başlat
+---
+
+# 0) Önkoşullar (bir kez)
+
+* Java 17 (backend)
+* Node 18+ (web & mobile)
+* Python 3.10+ (ai-service)
+* Docker Desktop (PostgreSQL için)
+
+---
+
+# 1) Ortam değişkenleri (bir kez)
+
+Repo kökünde bir `.env.example` tutman iyi olur, ama dev’de çoğunu sabit kullanıyoruz. Gerekli yerlerde aşağıda komutla da veriyorum.
+
+---
+
+# 2) Veritabanı (Docker) — başlat
 
 ```bash
 cd infra/docker
@@ -12,41 +31,66 @@ docker compose ps           # sra-postgres Up olmalı
 
 ---
 
-# 2) AI Servisi (FastAPI) — başlat
-## MacOS
-```bash
-cd apps/ai-service
-source .venv/bin/activate 
-cd app
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload
-```
+# 3) AI Servisi (FastAPI) — başlat
 
-## Windows
 ```bash
-#yolo
 cd apps/ai-service
-.venv\Scripts\activate
+python -m venv .venv    # İlk kez çalıştırırken
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install fastapi uvicorn tensorflow numpy matplotlib scipy Pillow python-multipart
+    # Not necessery after installed once
+
 cd app
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+or
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --reload --port 8000   # Old version
+
+#yolo
+cd app
+uvicorn main_yolo:app --host 0.0.0.0 --port 8001 --reload
+
+or
+uvicorn app.main_yolo:app --host 0.0.0.0 --port 8001 --reload
+
 ```
 
 **Sağlık kontrolü:**
+
 ```bash
+curl http://localhost:8000/health
+# {"status":"ok"}
 curl http://localhost:8001/yolo/health
 ```
----
-# 3) Backend (Spring Boot) — başlat
-**Yeni terminal aç**
-## MacOs
-```bash
-cd apps/backend
-mvnw spring-boot:run    
-```
 
-## Windows
+---
+
+# 4) Backend (Spring Boot) — başlat
+
+Yeni bir terminal aç:
+
 ```bash
 cd apps/backend
-./mvnw spring-boot:run    
+
+# For MAC
+export PG_HOST=localhost PG_PORT=5432 PG_DB=sra PG_USER=sra_user PG_PASS=sra_pass
+export AI_URL=http://localhost:8000
+
+# For Windows
+$env:PG_HOST = "localhost"
+$env:PG_PORT = "5432"
+$env:PG_DB   = "sra"
+$env:PG_USER = "sra_user"
+$env:PG_PASS = "sra_pass"
+$env:AI_URL = "http://localhost:8000"
+
+
+# Both
+mvnw spring-boot:run    
+
+
+./mvnw.cmd clean install #first time for windows
+
 ```
 
 **Sağlık kontrolü:**
@@ -58,34 +102,43 @@ curl http://localhost:8080/api/v1/health
 
 ---
 
-# 4) Uçtan uca hızlı test (terminalden)
+# 5) Uçtan uca hızlı test (terminalden)
 
 ```bash
 curl -F "file=@/ABSOLUTE/PATH/to/test.jpg" http://localhost:8080/api/v1/predict | jq
 # { "label":"plastic", "confidence":0.87, "binColor":"yellow", "tips":[...] }
 ```
-```bash
 curl -X POST -F "file=@/Users/PatrnPenguen/Desktop/test_images/plastic_bottle.jpg" http://127.0.0.1:5050/predict
-```
+
 
 **DB’de kayıt kontrolü (opsiyonel):**
 
 ```bash
 docker exec -it sra-postgres psql -U sra_user -d sra -c "SELECT * FROM prediction ORDER BY created_at DESC LIMIT 3;"
 ```
----
-# 5) Web (Vite React, JS) — başlat
-**Yeni terminal aç**
-```bash
-cd apps/web
-npm run dev
-```
+
 ---
 
-# 6) Mobile (Expo, JS) — başlat
-**Yeni terminal aç**
+# 6) Web (Vite React, JS) — başlat
+
+```bash
+cd apps/web
+echo "VITE_BACKEND_URL=http://localhost:8080" > .env
+npm install
+npm run dev
+# http://localhost:5173 ↗️
+```
+
+* Sayfada “Choose file → Predict” akışını denerken backend logunu izleyebilirsin.
+
+---
+
+# 7) Mobile (Expo, JS) — başlat
+
 ```bash
 cd apps/mobile
+npm install expo
+npx expo install expo-image-picker
 npm run start
 ```
 
@@ -103,7 +156,7 @@ Expo Metro’da:
 
 ---
 
-# 7) Başlangıç kabul listesi
+# 8) Başlangıç kabul listesi
 
 * [ ] `AI /health` **ok**
 * [ ] `Backend /health` **ok**
@@ -114,7 +167,7 @@ Expo Metro’da:
 
 ---
 
-# 8) Sık karşılaşılan hatalar (hızlı çözüm)
+# 9) Sık karşılaşılan hatalar (hızlı çözüm)
 
 * **`python-multipart` eksik** → `pip install python-multipart`
 * **Port çakışması** (5432/8080/8000): başka port seç, env’leri güncelle.
@@ -124,7 +177,7 @@ Expo Metro’da:
 
 ---
 
-# 9) (Opsiyonel) Tek komutla hepsi — script
+# 10) (Opsiyonel) Tek komutla hepsi — script
 
 Repo kökünde `scripts/dev-start.sh` oluştur:
 

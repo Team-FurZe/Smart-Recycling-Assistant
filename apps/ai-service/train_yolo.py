@@ -1,122 +1,122 @@
 from pathlib import Path
-
 import torch
+
 from ultralytics import YOLO
 
 
-def find_project_root(start: Path) -> Path:
+def get_device() -> str:
     """
-    Walk up the directory tree until we find a folder that has both:
-    - 'Smart-Recycling-Assistant' (this repo)
-    - 'Dataset' (your datasets folder) as children.
-
-    This makes the script work on both Windows and macOS even if the absolute
-    path is different.
+    Select the best available device automatically.
     """
-    current = start
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
 
-    # Limit to avoid an infinite loop (e.g. in case of weird FS)
-    for _ in range(10):
-        # current is some directory like .../root/Smart-Recycling-Assistant/apps/ai-service/app/model/src
-        # We want to find the parent that has BOTH:
-        #   Smart-Recycling-Assistant/
-        #   Dataset/
-        smart_dir = current / "Smart-Recycling-Assistant"
-        dataset_dir = current / "Dataset"
-
-        if smart_dir.exists() and dataset_dir.exists():
-            return current
-
-        # go one level up
-        current = current.parent
-
-    raise RuntimeError("Could not find project root containing 'Smart-Recycling-Assistant' and 'Dataset' folders.")
-
-
-def get_paths():
-    """
-    Resolve important paths in a cross-platform way (Windows + macOS).
-
-    Assumes folder structure like:
-
-    root/
-      Dataset/
-        multiple_garbage_detection/
-          data.yaml
-      Smart-Recycling-Assistant/
-        apps/
-          ai-service/
-            app/
-              model/
-                src/
-                  train_yolo.py
-    """
-    this_file = Path(__file__).resolve()          # .../Smart-Recycling-Assistant/apps/ai-service/app/model/src/train_yolo.py
-    src_dir = this_file.parent                    # .../src
-    # root is the folder that contains BOTH Dataset/ and Smart-Recycling-Assistant/
-    root_dir = find_project_root(src_dir)
-
-    # ai-service directory (we may want to put runs inside here)
-    ai_service_dir = root_dir / "Smart-Recycling-Assistant" / "apps" / "ai-service"
-
-    # dataset yaml: <root>/Dataset/multiple_garbage_detection/data.yaml
-    data_yaml = root_dir / "Dataset" / "multiple_garbage_detection" / "data.yaml"
-
-    # where to save YOLO training runs (inside ai-service)
-    runs_dir = ai_service_dir / "yolo_runs"
-
-    return {
-        "root_dir": root_dir,
-        "ai_service_dir": ai_service_dir,
-        "data_yaml": data_yaml,
-        "runs_dir": runs_dir,
-    }
 
 def train_yolo():
-    paths = get_paths()
-    data_yaml = paths["data_yaml"]
-    runs_dir = paths["runs_dir"]
+    """
+    Main training function.
+    Edit the configuration values below when needed.
+    """
 
-    print("== YOLO Training Configuration ==")
-    print(f"Root Dir : {paths['root_dir']}")
-    print(f"Data YAML: {data_yaml}")
-    print(f"Runs Dir : {runs_dir}")
-    print("--------------------------------")
+    # =========================================================
+    # Training configuration
+    # =========================================================
 
-    if not data_yaml.exists():
-        raise FileNotFoundError(f"data.yaml not found at: {data_yaml}")
+    # Write the merged dataset yaml path manually here.
+    data_yaml_path = r"C:\Projects\Smart Recycling Assistant\Dataset\merged_garbage_dataset\data.yaml"
 
-    # Select device automatically
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Using device: {device}")
+    epochs = 100
+    imgsz = 640
+    batch = 16
+    model_name = "yolo11n.pt"
+    run_name = "merged_garbage_training_v1"
+    project_dir = "yolo_runs"
+    workers = 8
+    patience = 20
+    cache = False
 
-    # Load base YOLO model (smallest, fastest variant)
-    model = YOLO("yolo11n.pt")
+    print("=" * 70)
+    print("YOLO TRAINING SCRIPT STARTED")
+    print("=" * 70)
+    print("[STEP 1] Checking dataset yaml path...")
+    print(f"[INFO] Dataset yaml path: {data_yaml_path}")
+    print()
 
-    # Train
+    data_yaml_file = Path(data_yaml_path)
+
+    if not data_yaml_file.exists():
+        print("[ERROR] Dataset yaml file was not found.")
+        print("[ERROR] Please run merge_dataset.py first or check the path.")
+        print("=" * 70)
+        return
+
+    print("[INFO] Dataset yaml file found successfully.")
+    print()
+
+    device = get_device()
+
+    print("[STEP 2] Training configuration")
+    print(f"[INFO] Model: {model_name}")
+    print(f"[INFO] Epochs: {epochs}")
+    print(f"[INFO] Image size: {imgsz}")
+    print(f"[INFO] Batch size: {batch}")
+    print(f"[INFO] Workers: {workers}")
+    print(f"[INFO] Patience: {patience}")
+    print(f"[INFO] Cache: {cache}")
+    print(f"[INFO] Device: {device}")
+    print(f"[INFO] Project directory: {project_dir}")
+    print(f"[INFO] Run name: {run_name}")
+    print()
+
+    print("[STEP 3] Loading model...")
+    model = YOLO(model_name)
+    print("[INFO] Model loaded successfully.")
+    print()
+
+    print("[STEP 4] Starting training...")
+    print("=" * 70)
+
     results = model.train(
-        data=str(data_yaml),
-        epochs=50,           # you can change this (e.g. 30)
-        imgsz=640,
-        batch=16
-        patience=20,
-        lr0=0.001,
-        mosaic=0.5,
-        mixup=0.0,
-        copy_paste=0.0,
-        project=str(runs_dir),
-        name="v3",
+        data=str(data_yaml_file),
+        epochs=epochs,
+        imgsz=imgsz,
+        batch=batch,
+        project=project_dir,
+        name=run_name,
+        workers=workers,
+        patience=patience,
         device=device,
+        pretrained=True,
+        cache=cache,
+        verbose=True,
     )
 
-    print("Training finished.")
-    print(f"Results saved to: {runs_dir / 'v1'}")
-    return results
+    print("=" * 70)
+    print("TRAINING FINISHED")
+    print("=" * 70)
 
+    weights_dir = Path(project_dir) / run_name / "weights"
+    best_path = weights_dir / "best.pt"
+    last_path = weights_dir / "last.pt"
 
-def main():
-    train_yolo()
+    print(f"[INFO] Training results object: {results}")
+    print(f"[INFO] Weights directory: {weights_dir}")
+
+    if best_path.exists():
+        print(f"[SUCCESS] Best model saved at: {best_path}")
+    else:
+        print("[WARNING] best.pt not found.")
+
+    if last_path.exists():
+        print(f"[SUCCESS] Last model saved at: {last_path}")
+    else:
+        print("[WARNING] last.pt not found.")
+
+    print("=" * 70)
 
 
 if __name__ == "__main__":
-    main()
+    train_yolo()

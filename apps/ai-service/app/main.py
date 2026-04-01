@@ -53,7 +53,7 @@ BIN_COLORS = {
 # Load YOLO model
 # ---------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent  # .../apps/ai-service/app
-MODEL_PATH = BASE_DIR / "models" / "yolo_waste_v2.pt"
+MODEL_PATH = BASE_DIR / "models" / "merged_model_v1.pt"
 
 device = select_device()
 print(f"[YOLO] Device: {device}")

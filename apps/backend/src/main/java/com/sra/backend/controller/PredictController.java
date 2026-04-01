@@ -1,9 +1,9 @@
 package com.sra.backend.controller;
 
-import com.sra.backend.dto.PredictResponse;
-import com.sra.backend.service.PredictService;
+import com.sra.backend.service.PredictionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,15 +12,15 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class PredictController {
 
-  private final PredictService service;
+    private final PredictionService predictionService;
 
-  @GetMapping("/health")
-  public Object health() {
-    return java.util.Map.of("status", "ok");
-  }
+    @PostMapping(value = "/predict", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public String predict(@RequestPart("file") MultipartFile file, Authentication authentication) {
+        return predictionService.predictAndSave(file, authentication.getName());
+    }
 
-  @PostMapping(value = "/predict", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public PredictResponse predict(@RequestPart("file") MultipartFile file) {
-    return service.predict(file);
-  }
+    @GetMapping("/health")
+    public String health() {
+        return "{\"status\":\"ok\"}";
+    }
 }

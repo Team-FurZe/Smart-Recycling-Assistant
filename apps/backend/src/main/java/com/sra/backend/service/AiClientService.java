@@ -1,5 +1,8 @@
 package com.sra.backend.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sra.backend.dto.prediction.PredictionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -20,9 +23,10 @@ public class AiClientService {
     @Value("${ai.url}")
     private String aiUrl;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
-    public String sendToAiAndGetJson(MultipartFile file) {
+    public PredictionResponse predict(MultipartFile file) {
         try {
             ByteArrayResource fileResource = new ByteArrayResource(file.getBytes()) {
                 @Override
@@ -46,7 +50,6 @@ public class AiClientService {
                     new HttpEntity<>(body, headers);
 
             String targetUrl = aiUrl + "/yolo/predict";
-            System.out.println("AI URL = " + targetUrl);
 
             ResponseEntity<String> response = restTemplate.postForEntity(
                     targetUrl,
@@ -54,15 +57,28 @@ public class AiClientService {
                     String.class
             );
 
-            return response.getBody();
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                throw new RuntimeException("AI service returned an invalid response.");
+            }
+
+            return objectMapper.readValue(response.getBody(), PredictionResponse.class);
 
         } catch (HttpStatusCodeException ex) {
-            System.out.println("AI ERROR BODY = " + ex.getResponseBodyAsString());
             throw new RuntimeException("AI service request failed: " + ex.getResponseBodyAsString(), ex);
+        } catch (JsonProcessingException ex) {
+            throw new RuntimeException("AI response could not be parsed.", ex);
         } catch (IOException ex) {
             throw new RuntimeException("AI request failed while reading file.", ex);
         } catch (Exception ex) {
             throw new RuntimeException("AI service request failed.", ex);
+        }
+    }
+
+    public String toJson(PredictionResponse response) {
+        try {
+            return objectMapper.writeValueAsString(response);
+        } catch (JsonProcessingException ex) {
+            throw new RuntimeException("Prediction response could not be serialized.", ex);
         }
     }
 }

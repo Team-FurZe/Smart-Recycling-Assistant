@@ -18,17 +18,16 @@ public class PredictionHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 255)
+    @Column(name = "original_file_name", nullable = false)
     private String originalFileName;
 
-    @Column(nullable = false, length = 500)
+    @Column(name = "stored_image_path", nullable = false, columnDefinition = "TEXT")
     private String storedImagePath;
 
-
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "prediction_json", nullable = false, columnDefinition = "TEXT")
     private String predictionJson;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

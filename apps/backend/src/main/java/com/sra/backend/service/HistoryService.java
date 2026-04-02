@@ -6,6 +6,7 @@ import com.sra.backend.entity.User;
 import com.sra.backend.repository.PredictionHistoryRepository;
 import com.sra.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,9 @@ public class HistoryService {
 
     private final PredictionHistoryRepository predictionHistoryRepository;
     private final UserRepository userRepository;
+
+    @Value("${server.port:8080}")
+    private String serverPort;
 
     @Transactional(readOnly = true)
     public List<HistoryItemResponse> getMyHistory(String email) {
@@ -41,10 +45,24 @@ public class HistoryService {
     }
 
     private HistoryItemResponse mapToResponse(PredictionHistory entity) {
+        String normalizedPath = entity.getStoredImagePath() == null
+                ? null
+                : entity.getStoredImagePath().replace("\\", "/");
+
+        String imageUrl = null;
+        if (normalizedPath != null) {
+            int uploadsIndex = normalizedPath.indexOf("uploads/");
+            if (uploadsIndex >= 0) {
+                String relativePath = normalizedPath.substring(uploadsIndex);
+                imageUrl = "http://localhost:" + serverPort + "/" + relativePath;
+            }
+        }
+
         return HistoryItemResponse.builder()
                 .id(entity.getId())
                 .originalFileName(entity.getOriginalFileName())
                 .storedImagePath(entity.getStoredImagePath())
+                .imageUrl(imageUrl)
                 .predictionJson(entity.getPredictionJson())
                 .createdAt(entity.getCreatedAt().toString())
                 .build();

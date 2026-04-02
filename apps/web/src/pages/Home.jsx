@@ -1,30 +1,45 @@
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout.jsx";
 import Hero from "../components/Hero.jsx";
 import DetectionPanel from "../components/DetectionPanel.jsx";
+import { getStoredUser, logout } from "../lib/auth";
 
 export default function Home() {
-  return (
-    <MainLayout>
-      <section id="home" style={{ padding: "56px 0 24px" }}>
-        <div className="sra-container content-panel">
-          <Hero />
-        </div>
-      </section>
+    const navigate = useNavigate();
+    const user = getStoredUser();
 
-      <section id="demo" style={{ padding: "32px 0" }}>
-        <div className="sra-container content-panel">
-          <DetectionPanel />
-        </div>
-      </section>
+    function handleLogout() {
+        logout();
+        navigate("/login");
+    }
 
-      <section id="about" style={{ padding: "32px 0 80px" }}>
-        <div className="sra-container content-panel">
-          <h2 style={{ marginTop: 0 }}>About</h2>
-          <p style={{ marginBottom: 0 }}>
-            Smart Recycle Assistant helps classify waste into recyclable categories using computer vision.
-          </p>
-        </div>
-      </section>
-    </MainLayout>
-  );
+    return (
+        <MainLayout>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "20px",
+                    gap: "12px",
+                    flexWrap: "wrap",
+                }}
+            >
+                <div>
+                    <h2 style={{ marginBottom: "6px" }}>Welcome</h2>
+                    <p style={{ margin: 0 }}>
+                        {user?.fullName || user?.name || user?.email || "User"}
+                    </p>
+                </div>
+
+                <div style={{ display: "flex", gap: "10px" }}>
+                    <button onClick={() => navigate("/history")}>History</button>
+                    <button onClick={handleLogout}>Logout</button>
+                </div>
+            </div>
+
+            <Hero />
+            <DetectionPanel />
+        </MainLayout>
+    );
 }

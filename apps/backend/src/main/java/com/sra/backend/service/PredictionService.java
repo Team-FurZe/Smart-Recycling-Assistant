@@ -1,5 +1,6 @@
 package com.sra.backend.service;
 
+import com.sra.backend.dto.prediction.PredictionResponse;
 import com.sra.backend.entity.PredictionHistory;
 import com.sra.backend.entity.User;
 import com.sra.backend.repository.PredictionHistoryRepository;
@@ -19,23 +20,23 @@ public class PredictionService {
     private final FileStorageService fileStorageService;
     private final AiClientService aiClientService;
 
-    public String predictAndSave(MultipartFile file, String email) {
+    public PredictionResponse predictAndSave(MultipartFile file, String email) {
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new RuntimeException("User not found."));
 
         String storedImagePath = fileStorageService.saveFile(file);
-        String predictionJson = aiClientService.sendToAiAndGetJson(file);
+        PredictionResponse predictionResponse = aiClientService.predict(file);
 
         PredictionHistory history = PredictionHistory.builder()
                 .originalFileName(file.getOriginalFilename() == null ? "unknown" : file.getOriginalFilename())
                 .storedImagePath(storedImagePath)
-                .predictionJson(predictionJson)
+                .predictionJson(aiClientService.toJson(predictionResponse))
                 .createdAt(LocalDateTime.now())
                 .user(user)
                 .build();
 
         predictionHistoryRepository.save(history);
 
-        return predictionJson;
+        return predictionResponse;
     }
 }

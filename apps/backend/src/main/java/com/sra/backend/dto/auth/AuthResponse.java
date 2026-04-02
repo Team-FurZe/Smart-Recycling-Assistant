@@ -5,8 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
 public class AuthResponse {
     private String token;
     private Long userId;

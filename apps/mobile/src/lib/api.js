@@ -1,7 +1,60 @@
 import * as FileSystem from "expo-file-system/legacy";
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "http://10.0.2.2:8080";
+const BACKEND_URL = "172.17.160.1:8080";
+
+const AUTH_LOGIN_URL = `${BACKEND_URL}/api/v1/auth/login`;
+const AUTH_SIGNUP_URL = `${BACKEND_URL}/api/v1/auth/signup`;
+const HISTORY_URL = `${BACKEND_URL}/api/v1/history/me`;
 const PREDICT_URL = `${BACKEND_URL}/api/v1/predict`;
+
+async function parseJsonResponse(res) {
+    const text = await res.text();
+
+    if (!res.ok) {
+        throw new Error(text || `HTTP ${res.status}`);
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        throw new Error("Response is not valid JSON.");
+    }
+}
+
+export async function loginUser(payload) {
+    const res = await fetch(AUTH_LOGIN_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    return parseJsonResponse(res);
+}
+
+export async function signupUser(payload) {
+    const res = await fetch(AUTH_SIGNUP_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    return parseJsonResponse(res);
+}
+
+export async function getMyHistory(token) {
+    const res = await fetch(HISTORY_URL, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    return parseJsonResponse(res);
+}
 
 export async function predictImageFromUri(uri, token) {
     const res = await FileSystem.uploadAsync(PREDICT_URL, uri, {
@@ -20,7 +73,7 @@ export async function predictImageFromUri(uri, token) {
 
     try {
         return JSON.parse(res.body);
-    } catch (e) {
+    } catch {
         throw new Error(`Response is not valid JSON: ${(res.body || "").slice(0, 300)}`);
     }
 }

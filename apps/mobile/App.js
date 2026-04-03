@@ -1,15 +1,13 @@
 import React from "react";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import CameraScreen from "./src/screens/CameraScreen";
+import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
-  return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
-        <StatusBar style="dark" />
-        <CameraScreen />
-      </SafeAreaView>
-    </SafeAreaProvider>
-  );
+    return (
+        <SafeAreaProvider>
+            <StatusBar style="dark" />
+            <AppNavigator />
+        </SafeAreaProvider>
+    );
 }

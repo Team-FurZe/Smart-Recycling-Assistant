@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
-import { predictYoloFromUri } from "../lib/api"; // ✅ YOLO
+import { predictImageFromUri } from "../lib/api";
 
 // (Opsiyonel) Eğer override label değişince binColor da değişsin istersen:
 const BIN_COLORS = {
@@ -103,10 +103,11 @@ export default function CameraScreen() {
 
       // ✅ ÖNEMLİ: bbox koordinatları doğru olsun diye
       // YOLO'ya gönderdiğimiz optimize edilmiş uri'yi hem saklıyoruz hem de görüntülüyoruz.
-      const optimizedUri = await optimizeImage(sourceUri);
+        const token = await getToken();
+        const optimizedUri = await optimizeImage(sourceUri);
       setPredictUri(optimizedUri);
 
-      const data = await predictYoloFromUri(optimizedUri);
+      const data = await predictImageFromUri(optimizedUri, token);
       setResult(data);
 
       setRetryStateById({});

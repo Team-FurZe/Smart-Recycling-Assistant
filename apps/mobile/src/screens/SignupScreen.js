@@ -15,13 +15,13 @@ import { useNavigation } from "@react-navigation/native";
 
 export default function SignupScreen({ onSignupSuccess }) {
     const navigation = useNavigation();
-    const [fullName, setFullName] = useState("");
     const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
 
     async function handleSignup() {
-        if (!fullName.trim() || !username.trim() || !password.trim()) {
+        if (!username.trim() || !email.trim() || !password.trim()) {
             Alert.alert("Error", "Please fill all fields.");
             return;
         }
@@ -30,20 +30,20 @@ export default function SignupScreen({ onSignupSuccess }) {
             setLoading(true);
 
             await signupUser({
-                fullName: fullName.trim(),
                 username: username.trim(),
+                email: email.trim(),
                 password,
             });
 
             const loginData = await loginUser({
-                username: username.trim(),
+                email: email.trim(),
                 password,
             });
 
             const token = loginData.token || loginData.accessToken || loginData.jwt;
             const user = loginData.user || {
-                fullName: fullName.trim(),
                 username: username.trim(),
+                email: email.trim(),
             };
 
             if (!token) {
@@ -68,17 +68,19 @@ export default function SignupScreen({ onSignupSuccess }) {
                 <Text style={styles.title}>Create Account</Text>
 
                 <TextInput
-                    placeholder="Full name"
-                    value={fullName}
-                    onChangeText={setFullName}
-                    style={styles.input}
-                />
-
-                <TextInput
                     placeholder="Username"
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
+                    style={styles.input}
+                />
+
+                <TextInput
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
                     style={styles.input}
                 />
 

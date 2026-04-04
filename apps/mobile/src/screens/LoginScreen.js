@@ -15,25 +15,26 @@ import { useNavigation } from "@react-navigation/native";
 
 export default function LoginScreen({ onLoginSuccess }) {
     const navigation = useNavigation();
-    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
 
     async function handleLogin() {
-        if (!username.trim() || !password.trim()) {
+        if (!email.trim() || !password.trim()) {
             Alert.alert("Error", "Please fill all fields.");
             return;
         }
 
         try {
             setLoading(true);
+
             const data = await loginUser({
-                username: username.trim(),
+                email: email.trim(),
                 password,
             });
 
             const token = data.token || data.accessToken || data.jwt;
-            const user = data.user || { username: username.trim() };
+            const user = data.user || { email: email.trim() };
 
             if (!token) {
                 throw new Error("Token not found in login response.");
@@ -58,10 +59,11 @@ export default function LoginScreen({ onLoginSuccess }) {
                 <Text style={styles.subtitle}>Login</Text>
 
                 <TextInput
-                    placeholder="Username"
-                    value={username}
-                    onChangeText={setUsername}
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
                     autoCapitalize="none"
+                    keyboardType="email-address"
                     style={styles.input}
                 />
 

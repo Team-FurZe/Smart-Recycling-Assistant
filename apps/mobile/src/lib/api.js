@@ -1,6 +1,6 @@
 import * as FileSystem from "expo-file-system/legacy";
 
-const BACKEND_URL = "172.17.160.1:8080";
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "http://192.168.1.199:8080";
 
 const AUTH_LOGIN_URL = `${BACKEND_URL}/api/v1/auth/login`;
 const AUTH_SIGNUP_URL = `${BACKEND_URL}/api/v1/auth/signup`;

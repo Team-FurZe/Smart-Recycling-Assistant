@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
+import { getToken } from "../lib/authStorage";
 import { predictImageFromUri } from "../lib/api";
 
 // (Opsiyonel) Eğer override label değişince binColor da değişsin istersen:

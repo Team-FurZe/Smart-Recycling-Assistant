@@ -7,7 +7,7 @@ export default function Signup() {
     const navigate = useNavigate();
 
     const [form, setForm] = useState({
-        fullName: "",
+        username: "",
         email: "",
         password: "",
     });
@@ -54,9 +54,9 @@ export default function Signup() {
                 <form onSubmit={handleSubmit} className="auth-form">
                     <input
                         type="text"
-                        name="fullName"
-                        placeholder="Full Name"
-                        value={form.fullName}
+                        name="username"
+                        placeholder="User Name"
+                        value={form.username}
                         onChange={handleChange}
                         required
                     />

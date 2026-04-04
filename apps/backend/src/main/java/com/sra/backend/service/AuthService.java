@@ -20,14 +20,19 @@ public class AuthService {
     private final JwtService jwtService;
 
     public AuthResponse signup(SignupRequest request) {
+        String normalizedUsername = request.getUsername().trim();
         String normalizedEmail = request.getEmail().trim().toLowerCase();
+
+        if (userRepository.existsByUsernameIgnoreCase(normalizedUsername)) {
+            throw new RuntimeException("Username is already taken.");
+        }
 
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new RuntimeException("Email is already registered.");
         }
 
         User user = User.builder()
-                .fullName(request.getFullName().trim())
+                .username(normalizedUsername)
                 .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .createdAt(LocalDateTime.now())
@@ -39,7 +44,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .userId(savedUser.getId())
-                .fullName(savedUser.getFullName())
+                .username(savedUser.getUsername())
                 .email(savedUser.getEmail())
                 .build();
     }
@@ -59,7 +64,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .userId(user.getId())
-                .fullName(user.getFullName())
+                .username(user.getUsername())
                 .email(user.getEmail())
                 .build();
     }

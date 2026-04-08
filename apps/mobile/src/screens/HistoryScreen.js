@@ -10,12 +10,9 @@ import {
     Pressable,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { getMyHistory } from "../lib/api";
+import { BACKEND_URL, getMyHistory } from "../lib/api";
 import { getToken } from "../lib/authStorage";
 import HistoryImageOverlay from "../components/HistoryImageOverlay";
-
-const BACKEND_URL =
-    process.env.EXPO_PUBLIC_BACKEND_URL || "http://10.0.2.2:8080";
 
 function parsePrediction(predictionJson) {
     if (!predictionJson) return null;
@@ -29,7 +26,6 @@ function parsePrediction(predictionJson) {
 
 function formatDate(value) {
     if (!value) return "-";
-
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
@@ -41,7 +37,10 @@ function buildImageUrl(storedImagePath) {
         return storedImagePath;
     }
 
-    const normalized = storedImagePath.startsWith("/") ? storedImagePath : `/${storedImagePath}`;
+    const normalized = storedImagePath.startsWith("/")
+        ? storedImagePath
+        : `/${storedImagePath}`;
+
     return `${BACKEND_URL}${normalized}`;
 }
 
@@ -62,12 +61,11 @@ export default function HistoryScreen() {
 
             const token = await getToken();
             const data = await getMyHistory(token);
-
             const list = Array.isArray(data) ? data : [];
 
             const mapped = list.map((item) => ({
                 ...item,
-                imageUrl: buildImageUrl(item.storedImagePath),
+                imageUrl: buildImageUrl(item.storedImagePath || item.imagePath || item.imageUrl),
             }));
 
             setItems(mapped);
@@ -93,7 +91,8 @@ export default function HistoryScreen() {
 
         return items.filter((item) => {
             const parsed = parsePrediction(item.predictionJson);
-            const labels = parsed?.detections?.map((d) => d.label).join(" ").toLowerCase() || "";
+            const labels =
+                parsed?.detections?.map((d) => d.label).join(" ").toLowerCase() || "";
 
             return (
                 (item.originalFileName || "").toLowerCase().includes(q) ||
@@ -114,24 +113,6 @@ export default function HistoryScreen() {
         return "Prediction available";
     }
 
-    function renderBadges(predictionJson) {
-        const parsed = parsePrediction(predictionJson);
-
-        if (!parsed || !Array.isArray(parsed.detections) || parsed.detections.length === 0) {
-            return <Text style={styles.emptyBadge}>No labels</Text>;
-        }
-
-        return (
-            <View style={styles.badgesRow}>
-                {parsed.detections.map((item, index) => (
-                    <View key={`${item.label}-${index}`} style={styles.badge}>
-                        <Text style={styles.badgeText}>{item.label}</Text>
-                    </View>
-                ))}
-            </View>
-        );
-    }
-
     function renderDetails(predictionJson) {
         const parsed = parsePrediction(predictionJson);
 
@@ -148,20 +129,14 @@ export default function HistoryScreen() {
         }
 
         return (
-            <View style={styles.detailsBox}>
+            <View style={styles.detailList}>
                 {parsed.detections.map((item, index) => (
-                    <View key={`${item.label}-${index}`} style={styles.detailCard}>
+                    <View key={item.id || `${item.label}-${index}`} style={styles.detailCard}>
                         <Text style={styles.detailTitle}>{item.label}</Text>
                         <Text style={styles.detailText}>
                             Confidence: {((item.confidence || 0) * 100).toFixed(2)}%
                         </Text>
                         <Text style={styles.detailText}>Bin Color: {item.binColor || "-"}</Text>
-                        {item.bbox ? (
-                            <Text style={styles.detailText}>
-                                Box: x {Number(item.bbox.x).toFixed(1)}, y {Number(item.bbox.y).toFixed(1)}, w{" "}
-                                {Number(item.bbox.width).toFixed(1)}, h {Number(item.bbox.height).toFixed(1)}
-                            </Text>
-                        ) : null}
                     </View>
                 ))}
             </View>
@@ -171,35 +146,39 @@ export default function HistoryScreen() {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" />
+                <ActivityIndicator size="large" color="#2E7D32" />
             </View>
         );
     }
 
     return (
         <FlatList
-            contentContainerStyle={styles.container}
             data={filteredItems}
             keyExtractor={(item, index) => String(item.id || index)}
+            contentContainerStyle={styles.container}
             refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={() => loadHistory(true)} />
             }
             ListHeaderComponent={
-                <View style={styles.header}>
-                    <Text style={styles.pageTitle}>Prediction History</Text>
-                    <Text style={styles.pageSubtitle}>See your previous detection results.</Text>
+                <View style={styles.headerWrap}>
+                    <View style={styles.heroCard}>
+                        <Text style={styles.title}>Prediction History</Text>
+                        <Text style={styles.subtitle}>
+                            Review previous uploads, labels, and bounding boxes.
+                        </Text>
+                    </View>
 
                     <TextInput
-                        placeholder="Search by file or label"
+                        style={styles.searchInput}
+                        placeholder="Search by file name or label..."
                         value={search}
                         onChangeText={setSearch}
-                        style={styles.searchInput}
                     />
                 </View>
             }
             ListEmptyComponent={<Text style={styles.empty}>No history found yet.</Text>}
             renderItem={({ item }) => (
-                <View style={styles.card}>
+                <View style={styles.historyCard}>
                     {item.imageUrl ? (
                         <HistoryImageOverlay
                             imageUrl={item.imageUrl}
@@ -211,28 +190,22 @@ export default function HistoryScreen() {
                         </View>
                     )}
 
-                    <View style={styles.infoArea}>
-                        <Text style={styles.fileName}>File: {item.originalFileName || "-"}</Text>
-                        <Text style={styles.dateText}>Date: {formatDate(item.createdAt)}</Text>
-                        <Text style={styles.summaryText}>
-                            Summary: {renderSummary(item.predictionJson)}
+                    <Text style={styles.fileName}>{item.originalFileName || "Untitled file"}</Text>
+                    <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
+                    <Text style={styles.summary}>{renderSummary(item.predictionJson)}</Text>
+
+                    <Pressable
+                        style={styles.detailButton}
+                        onPress={() => setExpandedId((prev) => (prev === item.id ? null : item.id))}
+                    >
+                        <Text style={styles.detailButtonText}>
+                            {expandedId === item.id ? "Hide Details" : "View Details"}
                         </Text>
+                    </Pressable>
 
-                        {renderBadges(item.predictionJson)}
-
-                        <Pressable
-                            style={styles.detailButton}
-                            onPress={() =>
-                                setExpandedId((prev) => (prev === item.id ? null : item.id))
-                            }
-                        >
-                            <Text style={styles.detailButtonText}>
-                                {expandedId === item.id ? "Hide Details" : "View Details"}
-                            </Text>
-                        </Pressable>
-
-                        {expandedId === item.id ? renderDetails(item.predictionJson) : null}
-                    </View>
+                    {expandedId === item.id && (
+                        <View style={styles.detailsWrap}>{renderDetails(item.predictionJson)}</View>
+                    )}
                 </View>
             )}
         />
@@ -242,132 +215,105 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
     container: {
         padding: 16,
-        paddingBottom: 32,
-        backgroundColor: "#F8FAFC",
+        backgroundColor: "#F5F7FB",
+        gap: 14,
     },
     center: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        backgroundColor: "#F5F7FB",
     },
-    header: {
-        marginBottom: 16,
+    headerWrap: {
+        gap: 14,
+        marginBottom: 8,
     },
-    pageTitle: {
+    heroCard: {
+        backgroundColor: "#fff",
+        borderRadius: 22,
+        padding: 20,
+    },
+    title: {
         fontSize: 26,
-        fontWeight: "800",
-        color: "#0F172A",
-        marginBottom: 4,
+        fontWeight: "700",
+        color: "#142033",
+        marginBottom: 6,
     },
-    pageSubtitle: {
-        fontSize: 14,
-        color: "#64748B",
-        marginBottom: 12,
+    subtitle: {
+        color: "#607080",
+        lineHeight: 20,
     },
     searchInput: {
-        backgroundColor: "#FFFFFF",
-        borderWidth: 1,
-        borderColor: "#E2E8F0",
+        backgroundColor: "#fff",
         borderRadius: 14,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
+        borderWidth: 1,
+        borderColor: "#D9E1EA",
+        padding: 14,
     },
     empty: {
         textAlign: "center",
-        marginTop: 40,
-        color: "#64748B",
+        color: "#607080",
+        marginTop: 30,
     },
-    card: {
-        backgroundColor: "#FFFFFF",
-        borderRadius: 20,
+    historyCard: {
+        backgroundColor: "#fff",
+        borderRadius: 22,
         padding: 14,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: "#E2E8F0",
-    },
-    infoArea: {
-        marginTop: 12,
-    },
-    fileName: {
-        fontSize: 15,
-        fontWeight: "700",
-        color: "#0F172A",
-        marginBottom: 4,
-    },
-    dateText: {
-        fontSize: 12,
-        color: "#64748B",
-        marginBottom: 8,
-    },
-    summaryText: {
-        fontSize: 14,
-        color: "#334155",
-        marginBottom: 10,
-    },
-    badgesRow: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
-        marginBottom: 12,
-    },
-    badge: {
-        backgroundColor: "#ECFDF5",
-        borderWidth: 1,
-        borderColor: "#BBF7D0",
-        borderRadius: 999,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-    },
-    badgeText: {
-        color: "#166534",
-        fontWeight: "700",
-        fontSize: 12,
-    },
-    emptyBadge: {
-        color: "#94A3B8",
-        marginBottom: 12,
-    },
-    detailButton: {
-        backgroundColor: "#0F172A",
-        borderRadius: 12,
-        paddingVertical: 10,
-        alignItems: "center",
-    },
-    detailButtonText: {
-        color: "#FFFFFF",
-        fontWeight: "700",
-    },
-    detailsBox: {
-        marginTop: 12,
         gap: 10,
-    },
-    detailCard: {
-        backgroundColor: "#F8FAFC",
-        borderRadius: 14,
-        padding: 12,
-        borderWidth: 1,
-        borderColor: "#E2E8F0",
-    },
-    detailTitle: {
-        fontSize: 14,
-        fontWeight: "800",
-        color: "#0F172A",
-        marginBottom: 6,
-    },
-    detailText: {
-        fontSize: 13,
-        color: "#475569",
-        marginBottom: 4,
     },
     noImageBox: {
         height: 220,
-        borderRadius: 16,
+        borderRadius: 18,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#E2E8F0",
+        backgroundColor: "#E8EDF4",
     },
     noImageText: {
-        color: "#64748B",
+        color: "#607080",
+        fontWeight: "600",
+    },
+    fileName: {
+        fontSize: 17,
         fontWeight: "700",
+        color: "#142033",
+    },
+    dateText: {
+        color: "#718096",
+    },
+    summary: {
+        color: "#607080",
+    },
+    detailButton: {
+        backgroundColor: "#142033",
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: "center",
+    },
+    detailButtonText: {
+        color: "#fff",
+        fontWeight: "700",
+    },
+    detailsWrap: {
+        backgroundColor: "#F8FBFF",
+        borderRadius: 16,
+        padding: 12,
+    },
+    detailList: {
+        gap: 10,
+    },
+    detailCard: {
+        backgroundColor: "#fff",
+        borderRadius: 14,
+        padding: 12,
+    },
+    detailTitle: {
+        fontSize: 15,
+        fontWeight: "700",
+        color: "#142033",
+        marginBottom: 6,
+    },
+    detailText: {
+        color: "#607080",
+        marginBottom: 4,
     },
 });

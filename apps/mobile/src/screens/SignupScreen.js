@@ -9,9 +9,9 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { signupUser, loginUser } from "../lib/api";
 import { saveAuth } from "../lib/authStorage";
-import { useNavigation } from "@react-navigation/native";
 
 export default function SignupScreen({ onSignupSuccess }) {
     const navigation = useNavigation();
@@ -61,39 +61,49 @@ export default function SignupScreen({ onSignupSuccess }) {
 
     return (
         <KeyboardAvoidingView
-            style={styles.container}
+            style={styles.page}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <View style={styles.card}>
-                <Text style={styles.title}>Create Account</Text>
+                <View style={styles.brandRow}>
+                    <View style={styles.iconBox}>
+                        <Text style={styles.iconText}>♻</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.eyebrow}>Smart Recycle Assistant</Text>
+                        <Text style={styles.title}>Sign Up</Text>
+                        <Text style={styles.subtitle}>Create your account.</Text>
+                    </View>
+                </View>
 
                 <TextInput
+                    style={styles.input}
                     placeholder="Username"
                     value={username}
                     onChangeText={setUsername}
-                    autoCapitalize="none"
-                    style={styles.input}
                 />
 
                 <TextInput
+                    style={styles.input}
                     placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
                     autoCapitalize="none"
                     keyboardType="email-address"
-                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
                 />
 
                 <TextInput
+                    style={styles.input}
                     placeholder="Password"
+                    secureTextEntry
                     value={password}
                     onChangeText={setPassword}
-                    secureTextEntry
-                    style={styles.input}
                 />
 
-                <Pressable style={styles.button} onPress={handleSignup} disabled={loading}>
-                    <Text style={styles.buttonText}>{loading ? "Loading..." : "Sign up"}</Text>
+                <Pressable style={styles.primaryButton} onPress={handleSignup} disabled={loading}>
+                    <Text style={styles.primaryButtonText}>
+                        {loading ? "Creating..." : "Create Account"}
+                    </Text>
                 </Pressable>
 
                 <Pressable onPress={() => navigation.navigate("Login")}>
@@ -105,44 +115,80 @@ export default function SignupScreen({ onSignupSuccess }) {
 }
 
 const styles = StyleSheet.create({
-    container: {
+    page: {
         flex: 1,
         justifyContent: "center",
         padding: 20,
         backgroundColor: "#F5F7FB",
     },
     card: {
-        backgroundColor: "white",
-        padding: 20,
+        backgroundColor: "#fff",
+        borderRadius: 24,
+        padding: 24,
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 20,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 4,
+    },
+    brandRow: {
+        flexDirection: "row",
+        gap: 14,
+        marginBottom: 22,
+    },
+    iconBox: {
+        width: 56,
+        height: 56,
         borderRadius: 16,
+        backgroundColor: "#2E7D32",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    iconText: {
+        color: "#fff",
+        fontSize: 26,
+        fontWeight: "700",
+    },
+    eyebrow: {
+        color: "#2E7D32",
+        fontWeight: "700",
+        fontSize: 12,
+        textTransform: "uppercase",
+        letterSpacing: 0.8,
+        marginBottom: 4,
     },
     title: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: "700",
-        textAlign: "center",
-        marginBottom: 20,
+        color: "#142033",
+    },
+    subtitle: {
+        color: "#607080",
+        marginTop: 4,
     },
     input: {
         borderWidth: 1,
-        borderColor: "#D9DDE7",
-        borderRadius: 12,
-        padding: 12,
+        borderColor: "#D9E1EA",
+        borderRadius: 14,
+        padding: 14,
         marginBottom: 12,
         backgroundColor: "#fff",
     },
-    button: {
-        backgroundColor: "#2E7D32",
-        padding: 14,
-        borderRadius: 12,
+    primaryButton: {
+        marginTop: 4,
+        backgroundColor: "#142033",
+        padding: 15,
+        borderRadius: 14,
         alignItems: "center",
     },
-    buttonText: {
-        color: "white",
+    primaryButtonText: {
+        color: "#fff",
         fontWeight: "700",
     },
     link: {
         textAlign: "center",
-        marginTop: 16,
+        marginTop: 18,
         color: "#1565C0",
+        fontWeight: "600",
     },
 });

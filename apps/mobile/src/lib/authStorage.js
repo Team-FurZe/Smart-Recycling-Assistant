@@ -1,11 +1,13 @@
 ﻿import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const TOKEN_KEY = "sra_token";
-const USER_KEY = "sra_user";
+const TOKEN_KEY = "sra_mobile_token";
+const USER_KEY = "sra_mobile_user";
 
 export async function saveAuth(token, user) {
-    await AsyncStorage.setItem(TOKEN_KEY, token);
-    await AsyncStorage.setItem(USER_KEY, JSON.stringify(user || null));
+    await AsyncStorage.multiSet([
+        [TOKEN_KEY, token],
+        [USER_KEY, JSON.stringify(user || {})],
+    ]);
 }
 
 export async function getToken() {

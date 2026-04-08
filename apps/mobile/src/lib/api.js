@@ -77,3 +77,5 @@ export async function predictImageFromUri(uri, token) {
         throw new Error(`Response is not valid JSON: ${(res.body || "").slice(0, 300)}`);
     }
 }
+
+export { BACKEND_URL };

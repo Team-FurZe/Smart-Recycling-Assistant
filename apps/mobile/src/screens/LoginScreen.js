@@ -9,9 +9,9 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { loginUser } from "../lib/api";
 import { saveAuth } from "../lib/authStorage";
-import { useNavigation } from "@react-navigation/native";
 
 export default function LoginScreen({ onLoginSuccess }) {
     const navigation = useNavigation();
@@ -47,40 +47,62 @@ export default function LoginScreen({ onLoginSuccess }) {
         } finally {
             setLoading(false);
         }
+
+        console.log("HANDLE LOGIN START");
+
+        const data = await loginUser({
+            email: email.trim(),
+            password,
+        });
+
+        console.log("LOGIN DATA", data);
+
+        const token = data.token || data.accessToken || data.jwt;
+        console.log("TOKEN FOUND", token);
     }
 
     return (
         <KeyboardAvoidingView
-            style={styles.container}
+            style={styles.page}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <View style={styles.card}>
-                <Text style={styles.title}>Smart Recycle Assistant</Text>
-                <Text style={styles.subtitle}>Login</Text>
+                <View style={styles.brandRow}>
+                    <View style={styles.iconBox}>
+                        <Text style={styles.iconText}>♻</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.eyebrow}>Smart Recycle Assistant</Text>
+                        <Text style={styles.title}>Login</Text>
+                        <Text style={styles.subtitle}>Sign in to continue.</Text>
+                    </View>
+                </View>
 
                 <TextInput
+                    style={styles.input}
                     placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
                     autoCapitalize="none"
                     keyboardType="email-address"
-                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
                 />
 
                 <TextInput
+                    style={styles.input}
                     placeholder="Password"
+                    secureTextEntry
                     value={password}
                     onChangeText={setPassword}
-                    secureTextEntry
-                    style={styles.input}
                 />
 
-                <Pressable style={styles.button} onPress={handleLogin} disabled={loading}>
-                    <Text style={styles.buttonText}>{loading ? "Loading..." : "Login"}</Text>
+                <Pressable style={styles.primaryButton} onPress={handleLogin} disabled={loading}>
+                    <Text style={styles.primaryButtonText}>
+                        {loading ? "Logging in..." : "Login"}
+                    </Text>
                 </Pressable>
 
                 <Pressable onPress={() => navigation.navigate("Signup")}>
-                    <Text style={styles.link}>Don&apos;t have an account? Sign up</Text>
+                    <Text style={styles.link}>Don’t have an account? Sign up</Text>
                 </Pressable>
             </View>
         </KeyboardAvoidingView>
@@ -88,50 +110,80 @@ export default function LoginScreen({ onLoginSuccess }) {
 }
 
 const styles = StyleSheet.create({
-    container: {
+    page: {
         flex: 1,
         justifyContent: "center",
         padding: 20,
         backgroundColor: "#F5F7FB",
     },
     card: {
-        backgroundColor: "white",
-        padding: 20,
+        backgroundColor: "#fff",
+        borderRadius: 24,
+        padding: 24,
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 20,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 4,
+    },
+    brandRow: {
+        flexDirection: "row",
+        gap: 14,
+        marginBottom: 22,
+    },
+    iconBox: {
+        width: 56,
+        height: 56,
         borderRadius: 16,
+        backgroundColor: "#2E7D32",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    iconText: {
+        color: "#fff",
+        fontSize: 26,
+        fontWeight: "700",
+    },
+    eyebrow: {
+        color: "#2E7D32",
+        fontWeight: "700",
+        fontSize: 12,
+        textTransform: "uppercase",
+        letterSpacing: 0.8,
+        marginBottom: 4,
     },
     title: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: "700",
-        textAlign: "center",
-        marginBottom: 8,
+        color: "#142033",
     },
     subtitle: {
-        fontSize: 18,
-        textAlign: "center",
-        marginBottom: 20,
+        color: "#607080",
+        marginTop: 4,
     },
     input: {
         borderWidth: 1,
-        borderColor: "#D9DDE7",
-        borderRadius: 12,
-        padding: 12,
+        borderColor: "#D9E1EA",
+        borderRadius: 14,
+        padding: 14,
         marginBottom: 12,
         backgroundColor: "#fff",
     },
-    button: {
-        backgroundColor: "#2E7D32",
-        padding: 14,
-        borderRadius: 12,
-        alignItems: "center",
+    primaryButton: {
         marginTop: 4,
+        backgroundColor: "#142033",
+        padding: 15,
+        borderRadius: 14,
+        alignItems: "center",
     },
-    buttonText: {
-        color: "white",
+    primaryButtonText: {
+        color: "#fff",
         fontWeight: "700",
     },
     link: {
         textAlign: "center",
-        marginTop: 16,
+        marginTop: 18,
         color: "#1565C0",
+        fontWeight: "600",
     },
 });

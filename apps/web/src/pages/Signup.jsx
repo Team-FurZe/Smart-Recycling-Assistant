@@ -2,6 +2,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { signupUser } from "../lib/api";
 import { setAuth } from "../lib/auth";
+import "../styles/auth-page.css";
 
 export default function Signup() {
     const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function Signup() {
     });
 
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     function handleChange(e) {
         const { name, value } = e.target;
@@ -22,13 +24,11 @@ export default function Signup() {
     async function handleSubmit(e) {
         e.preventDefault();
         setLoading(true);
+        setError("");
 
         try {
             const response = await signupUser(form);
             setAuth(response);
-
-            alert("Signup successful. Welcome to Smart Recycle Assistant.");
-
             navigate("/");
         } catch (err) {
             let message = err.message || "Signup failed";
@@ -37,9 +37,10 @@ export default function Signup() {
                 const parsed = JSON.parse(message);
                 message = parsed.message || message;
             } catch {
+                // keep original message
             }
 
-            alert(message);
+            setError(message);
         } finally {
             setLoading(false);
         }
@@ -47,45 +48,70 @@ export default function Signup() {
 
     return (
         <div className="auth-page">
-            <div className="auth-card">
-                <h1>Sign Up</h1>
-                <p>Create your account to continue.</p>
+            <div className="auth-page__card">
+                <div className="auth-page__brand">
+                    <div className="auth-page__icon">♻</div>
+                    <div>
+                        <p className="auth-page__eyebrow">Smart Recycle Assistant</p>
+                        <h1 className="auth-page__title">Sign Up</h1>
+                        <p className="auth-page__subtitle">
+                            Create your account to continue.
+                        </p>
+                    </div>
+                </div>
 
-                <form onSubmit={handleSubmit} className="auth-form">
-                    <input
-                        type="text"
-                        name="username"
-                        placeholder="User Name"
-                        value={form.username}
-                        onChange={handleChange}
-                        required
-                    />
+                <form className="auth-form" onSubmit={handleSubmit}>
+                    <label className="auth-form__group">
+                        <span>Username</span>
+                        <input
+                            className="auth-form__input"
+                            type="text"
+                            name="username"
+                            value={form.username}
+                            onChange={handleChange}
+                            placeholder="Choose a username"
+                            required
+                        />
+                    </label>
 
-                    <input
-                        type="email"
-                        name="email"
-                        placeholder="Email"
-                        value={form.email}
-                        onChange={handleChange}
-                        required
-                    />
+                    <label className="auth-form__group">
+                        <span>Email</span>
+                        <input
+                            className="auth-form__input"
+                            type="email"
+                            name="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            placeholder="Enter your email"
+                            required
+                        />
+                    </label>
 
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Password"
-                        value={form.password}
-                        onChange={handleChange}
-                        required
-                    />
+                    <label className="auth-form__group">
+                        <span>Password</span>
+                        <input
+                            className="auth-form__input"
+                            type="password"
+                            name="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            placeholder="Create a password"
+                            required
+                        />
+                    </label>
 
-                    <button type="submit" disabled={loading}>
+                    {error && <p className="auth-form__error">{error}</p>}
+
+                    <button className="auth-form__submit" type="submit" disabled={loading}>
                         {loading ? "Creating..." : "Create Account"}
                     </button>
                 </form>
 
-                <p>
-                    Already have an account? <Link to="/login">Login</Link>
+                <p className="auth-page__footer-text">
+                    Already have an account?{" "}
+                    <Link className="auth-page__link" to="/login">
+                        Login
+                    </Link>
                 </p>
             </div>
         </div>

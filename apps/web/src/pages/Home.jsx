@@ -1,45 +1,37 @@
-import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout.jsx";
 import Hero from "../components/Hero.jsx";
 import DetectionPanel from "../components/DetectionPanel.jsx";
-import { getStoredUser, logout } from "../lib/auth";
+import { getStoredUser } from "../lib/auth";
+import "../styles/home-page.css";
 
 export default function Home() {
-    const navigate = useNavigate();
     const user = getStoredUser();
 
-    function handleLogout() {
-        logout();
-        navigate("/login");
-    }
+    const displayName =
+        user?.username || user?.fullName || user?.name || user?.email || "User";
 
     return (
         <MainLayout>
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "20px",
-                    gap: "12px",
-                    flexWrap: "wrap",
-                }}
-            >
-                <div>
-                    <h2 style={{ marginBottom: "6px" }}>Welcome</h2>
-                    <p style={{ margin: 0 }}>
-                        {user?.fullName || user?.name || user?.email || "User"}
-                    </p>
+            <section className="home-page">
+                <div className="home-page__welcome">
+                    <div>
+                        <p className="home-page__eyebrow">Welcome back</p>
+                        <h1 className="home-page__title">{displayName}</h1>
+                        <p className="home-page__subtitle">
+                            Upload a waste image, review detections, and get recycling guidance
+                            in a clean and simple interface.
+                        </p>
+                    </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "10px" }}>
-                    <button onClick={() => navigate("/history")}>History</button>
-                    <button onClick={handleLogout}>Logout</button>
+                <div className="home-page__hero">
+                    <Hero />
                 </div>
-            </div>
 
-            <Hero />
-            <DetectionPanel />
+                <div className="home-page__panel" id="demo">
+                    <DetectionPanel />
+                </div>
+            </section>
         </MainLayout>
     );
 }

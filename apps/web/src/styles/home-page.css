@@ -1,0 +1,44 @@
+﻿.home-page {
+    display: grid;
+    gap: 22px;
+}
+
+.home-page__welcome {
+    background: linear-gradient(135deg, #ffffff, #f7fbff);
+    border: 1px solid #e5eaf2;
+    border-radius: 24px;
+    padding: 26px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.05);
+}
+
+.home-page__eyebrow {
+    margin: 0 0 8px;
+    color: #2e7d32;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.78rem;
+}
+
+.home-page__title {
+    margin: 0 0 10px;
+    font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+    line-height: 1.1;
+    color: #142033;
+}
+
+.home-page__subtitle {
+    margin: 0;
+    max-width: 760px;
+    color: #5b6675;
+    font-size: 1rem;
+}
+
+.home-page__hero,
+.home-page__panel {
+    background: #ffffff;
+    border: 1px solid #e5eaf2;
+    border-radius: 24px;
+    padding: 22px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.05);
+}

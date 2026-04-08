@@ -1,4 +1,5 @@
 ﻿import { useMemo } from "react";
+import "./HistoryImageOverlay.css";
 
 export default function HistoryImageOverlay({ imageUrl, predictionJson, alt }) {
     const parsed = useMemo(() => {
@@ -16,46 +17,70 @@ export default function HistoryImageOverlay({ imageUrl, predictionJson, alt }) {
     const imageHeight = parsed?.imageHeight || 1;
 
     return (
-        <div className="history-image-wrap">
+        <div className="history-overlay">
             <img
                 src={imageUrl}
                 alt={alt || "History item"}
-                className="history-preview"
+                className="history-overlay__image"
             />
 
-            {Array.isArray(detections) &&
-                detections.map((item) => {
-                    const bbox = item?.bbox;
-                    if (!bbox) return null;
+            <div className="history-overlay__canvas">
+                {Array.isArray(detections) &&
+                    detections.map((item, index) => {
+                        const bbox = item?.bbox;
+                        if (!bbox) return null;
 
-                    const left = (bbox.x / imageWidth) * 100;
-                    const top = (bbox.y / imageHeight) * 100;
-                    const width = (bbox.width / imageWidth) * 100;
-                    const height = (bbox.height / imageHeight) * 100;
+                        const left = (bbox.x / imageWidth) * 100;
+                        const top = (bbox.y / imageHeight) * 100;
+                        const width = (bbox.width / imageWidth) * 100;
+                        const height = (bbox.height / imageHeight) * 100;
 
-                    return (
-                        <div
-                            key={item.id}
-                            className="history-overlay-box"
+                        return (
+                            <div
+                                key={item.id || `${item.label}-${index}`}
+                                className="history-overlay__box"
+                                style={{
+                                    left: `${left}%`,
+                                    top: `${top}%`,
+                                    width: `${width}%`,
+                                    height: `${height}%`,
+                                    borderColor: item.binColor || "#4CAF50",
+                                }}
+                            >
+                                <div
+                                    className="history-overlay__label"
+                                    style={{
+                                        backgroundColor: item.binColor || "#4CAF50",
+                                    }}
+                                >
+                                    {item.label}
+                                </div>
+                            </div>
+                        );
+                    })}
+            </div>
+
+            {!parsed?.noWaste && Array.isArray(detections) && detections.length > 0 && (
+                <div className="history-overlay__legend">
+                    {detections.map((item, index) => (
+                        <span
+                            className="history-overlay__legend-badge"
+                            key={item.id || `${item.label}-${index}-legend`}
                             style={{
-                                left: `${left}%`,
-                                top: `${top}%`,
-                                width: `${width}%`,
-                                height: `${height}%`,
-                                borderColor: item.binColor || "#22c55e",
+                                borderColor: item.binColor || "#4CAF50",
                             }}
                         >
               <span
-                  className="history-overlay-label"
+                  className="history-overlay__legend-dot"
                   style={{
-                      background: item.binColor || "#22c55e",
+                      backgroundColor: item.binColor || "#4CAF50",
                   }}
-              >
-                {item.id} · {item.label}
-              </span>
-                        </div>
-                    );
-                })}
+              />
+                            {item.label}
+            </span>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

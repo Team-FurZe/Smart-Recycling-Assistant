@@ -26,8 +26,7 @@ uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 #yolo
 cd apps/ai-service
 .venv\Scripts\activate
-cd app
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 ```
 
 **Sağlık kontrolü:**

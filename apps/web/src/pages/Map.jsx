@@ -1,4 +1,10 @@
-﻿import { APIProvider, AdvancedMarker, InfoWindow, Map as GoogleMap } from "@vis.gl/react-google-maps";
+﻿import {
+    APIProvider,
+    AdvancedMarker,
+    InfoWindow,
+    Map as GoogleMap,
+    useMap,
+} from "@vis.gl/react-google-maps";
 import { useMemo, useState } from "react";
 
 import MainLayout from "../layouts/MainLayout.jsx";
@@ -57,6 +63,10 @@ const binLocations = [
     },
 ];
 
+function toRadians(value) {
+    return (value * Math.PI) / 180;
+}
+
 function calculateDistanceInKm(firstPosition, secondPosition) {
     const earthRadiusKm = 6371;
 
@@ -78,10 +88,6 @@ function calculateDistanceInKm(firstPosition, secondPosition) {
     return earthRadiusKm * c;
 }
 
-function toRadians(value) {
-    return (value * Math.PI) / 180;
-}
-
 function formatDistance(distance) {
     if (distance == null) {
         return "Location needed";
@@ -94,9 +100,79 @@ function formatDistance(distance) {
     return `${distance.toFixed(2)} km away`;
 }
 
+function MapContent({
+                        center,
+                        locations,
+                        selectedLocation,
+                        setSelectedLocation,
+                        userPosition,
+                        showMyLocation,
+                    }) {
+    const map = useMap();
+
+    function handleShowMyLocation() {
+        showMyLocation((position) => {
+            if (map) {
+                map.panTo(position);
+                map.setZoom(16);
+            }
+        });
+    }
+
+    return (
+        <div className="map-page__map-wrapper">
+            <GoogleMap
+                className="map-page__map"
+                defaultCenter={center}
+                defaultZoom={13}
+                mapId="smart-recycle-map"
+                gestureHandling="greedy"
+                disableDefaultUI={false}
+            >
+                {locations.map((location) => (
+                    <AdvancedMarker
+                        key={location.id}
+                        position={location.position}
+                        title={location.name}
+                        onClick={() => setSelectedLocation(location)}
+                    >
+                        <div className="map-page__marker">♻</div>
+                    </AdvancedMarker>
+                ))}
+
+                {userPosition && (
+                    <AdvancedMarker position={userPosition} title="Your Location">
+                        <div className="map-page__user-marker">●</div>
+                    </AdvancedMarker>
+                )}
+
+                {selectedLocation && (
+                    <InfoWindow
+                        position={selectedLocation.position}
+                        onCloseClick={() => setSelectedLocation(null)}
+                    >
+                        <div className="map-page__info-window">
+                            <h3>{selectedLocation.name}</h3>
+                            <p>{selectedLocation.type}</p>
+                            <span>{selectedLocation.address}</span>
+                        </div>
+                    </InfoWindow>
+                )}
+            </GoogleMap>
+
+            <button
+                className="map-page__my-location-btn"
+                type="button"
+                onClick={handleShowMyLocation}
+            >
+                📍 My Location
+            </button>
+        </div>
+    );
+}
+
 export default function MapPage() {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    console.log("Google Maps API Key:", apiKey);
 
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [userPosition, setUserPosition] = useState(null);
@@ -125,7 +201,7 @@ export default function MapPage() {
             });
     }, [userPosition]);
 
-    function refreshUserLocation() {
+    function refreshUserLocation(onSuccess) {
         setLocationError("");
         setIsRefreshing(true);
 
@@ -137,15 +213,20 @@ export default function MapPage() {
 
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                setUserPosition({
+                const newUserPosition = {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude,
-                });
+                };
 
+                setUserPosition(newUserPosition);
                 setIsRefreshing(false);
+
+                if (onSuccess) {
+                    onSuccess(newUserPosition);
+                }
             },
             () => {
-                setLocationError("Location permission is needed to sort by nearest bins.");
+                setLocationError("Location permission is needed to show your location.");
                 setIsRefreshing(false);
             },
             {
@@ -156,6 +237,10 @@ export default function MapPage() {
         );
     }
 
+    function showMyLocation(onSuccess) {
+        refreshUserLocation(onSuccess);
+    }
+
     if (!apiKey) {
         return (
             <MainLayout>
@@ -164,7 +249,8 @@ export default function MapPage() {
                         <p className="map-page__eyebrow">Recycling Map</p>
                         <h1 className="map-page__title">Waste Bin Locations</h1>
                         <p className="map-page__subtitle">
-                            Google Maps API key is missing. Please add VITE_GOOGLE_MAPS_API_KEY to your .env file.
+                            Google Maps API key is missing. Please add
+                            VITE_GOOGLE_MAPS_API_KEY to your .env.local file.
                         </p>
                     </div>
 
@@ -185,7 +271,8 @@ export default function MapPage() {
                         <p className="map-page__eyebrow">Recycling Map</p>
                         <h1 className="map-page__title">Waste Bin Locations</h1>
                         <p className="map-page__subtitle">
-                            View selected recycling bin locations on the map. Click a pin to see details.
+                            View selected recycling bin locations on the map. Click a pin to
+                            see details.
                         </p>
                     </div>
 
@@ -198,44 +285,14 @@ export default function MapPage() {
                 <div className="map-page__content">
                     <div className="map-page__map-card">
                         <APIProvider apiKey={apiKey}>
-                            <GoogleMap
-                                className="map-page__map"
-                                defaultCenter={center}
-                                defaultZoom={13}
-                                mapId="smart-recycle-map"
-                                gestureHandling="greedy"
-                                disableDefaultUI={false}
-                            >
-                                {binLocations.map((location) => (
-                                    <AdvancedMarker
-                                        key={location.id}
-                                        position={location.position}
-                                        title={location.name}
-                                        onClick={() => setSelectedLocation(location)}
-                                    >
-                                        <div className="map-page__marker">♻</div>
-                                    </AdvancedMarker>
-                                ))}
-
-                                {userPosition && (
-                                    <AdvancedMarker position={userPosition} title="Your Location">
-                                        <div className="map-page__user-marker">●</div>
-                                    </AdvancedMarker>
-                                )}
-
-                                {selectedLocation && (
-                                    <InfoWindow
-                                        position={selectedLocation.position}
-                                        onCloseClick={() => setSelectedLocation(null)}
-                                    >
-                                        <div className="map-page__info-window">
-                                            <h3>{selectedLocation.name}</h3>
-                                            <p>{selectedLocation.type}</p>
-                                            <span>{selectedLocation.address}</span>
-                                        </div>
-                                    </InfoWindow>
-                                )}
-                            </GoogleMap>
+                            <MapContent
+                                center={center}
+                                locations={binLocations}
+                                selectedLocation={selectedLocation}
+                                setSelectedLocation={setSelectedLocation}
+                                userPosition={userPosition}
+                                showMyLocation={showMyLocation}
+                            />
                         </APIProvider>
                     </div>
 
@@ -253,7 +310,7 @@ export default function MapPage() {
                             <button
                                 className="map-page__refresh-btn"
                                 type="button"
-                                onClick={refreshUserLocation}
+                                onClick={() => refreshUserLocation()}
                                 disabled={isRefreshing}
                             >
                                 {isRefreshing ? "Refreshing..." : "Refresh"}
@@ -261,9 +318,7 @@ export default function MapPage() {
                         </div>
 
                         {locationError && (
-                            <div className="map-page__location-error">
-                                {locationError}
-                            </div>
+                            <div className="map-page__location-error">{locationError}</div>
                         )}
 
                         {sortedLocations.map((location) => (

@@ -86,6 +86,7 @@ function formatDistance(distance) {
 
 export default function MapPage() {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    console.log("Google Maps API Key:", apiKey);
 
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [userPosition, setUserPosition] = useState(null);

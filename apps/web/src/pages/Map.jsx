@@ -45,6 +45,16 @@ const binLocations = [
             lng: 32.822917,
         },
     },
+    {
+        id: 5,
+        name: "100.Yıl Waste Bin",
+        type: "Mixed Recycling",
+        address: "100.Yıl",
+        position: {
+            lat: 39.896378,
+            lng: 32.797081,
+        },
+    },
 ];
 
 function calculateDistanceInKm(firstPosition, secondPosition) {

@@ -1,11 +1,12 @@
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+
 import Footer from "../components/footer/Footer";
 import { getStoredUser, logout } from "../lib/auth";
+
 import "./MainLayout.css";
 
 export default function MainLayout({ children }) {
     const navigate = useNavigate();
-    const location = useLocation();
     const user = getStoredUser();
 
     function handleLogout() {
@@ -53,6 +54,17 @@ export default function MainLayout({ children }) {
                             }
                         >
                             History
+                        </NavLink>
+
+                        <NavLink
+                            to="/map"
+                            className={({ isActive }) =>
+                                isActive
+                                    ? "app-nav__link app-nav__link--active"
+                                    : "app-nav__link"
+                            }
+                        >
+                            Map
                         </NavLink>
                     </nav>
 

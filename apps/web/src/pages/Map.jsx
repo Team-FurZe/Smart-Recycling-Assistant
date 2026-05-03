@@ -321,27 +321,29 @@ export default function MapPage() {
                             <div className="map-page__location-error">{locationError}</div>
                         )}
 
-                        {sortedLocations.map((location) => (
-                            <button
-                                key={location.id}
-                                className={
-                                    selectedLocation?.id === location.id
-                                        ? "map-page__location map-page__location--active"
-                                        : "map-page__location"
-                                }
-                                type="button"
-                                onClick={() => setSelectedLocation(location)}
-                            >
-                                <span className="map-page__location-icon">♻</span>
+                        <div className="map-page__location-scroll">
+                            {sortedLocations.map((location) => (
+                                <button
+                                    key={location.id}
+                                    className={
+                                        selectedLocation?.id === location.id
+                                            ? "map-page__location map-page__location--active"
+                                            : "map-page__location"
+                                    }
+                                    type="button"
+                                    onClick={() => setSelectedLocation(location)}
+                                >
+                                    <span className="map-page__location-icon">♻</span>
 
-                                <span className="map-page__location-text">
-                  <strong>{location.name}</strong>
-                  <small>{location.type}</small>
-                  <em>{location.address}</em>
-                  <b>{formatDistance(location.distance)}</b>
-                </span>
-                            </button>
-                        ))}
+                                    <span className="map-page__location-text">
+                                        <strong>{location.name}</strong>
+                                        <small>{location.type}</small>
+                                        <em>{location.address}</em>
+                                        <b>{formatDistance(location.distance)}</b>
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
                     </aside>
                 </div>
             </section>

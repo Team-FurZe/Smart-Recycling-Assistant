@@ -15,6 +15,7 @@ import LoginScreen from "../screens/LoginScreen";
 import SignupScreen from "../screens/SignupScreen";
 import CameraScreen from "../screens/CameraScreen";
 import HistoryScreen from "../screens/HistoryScreen";
+import MapScreen from "../screens/MapScreen";
 import { clearAuth, getToken } from "../lib/authStorage";
 
 const Stack = createNativeStackNavigator();
@@ -65,6 +66,23 @@ function MainHeader({ activeTab, onChangeTab, onLogout }) {
                             History
                         </Text>
                     </Pressable>
+
+                    <Pressable
+                        onPress={() => onChangeTab("map")}
+                        style={[
+                            styles.tabButton,
+                            activeTab === "map" && styles.tabButtonActive,
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.tabButtonText,
+                                activeTab === "map" && styles.tabButtonTextActive,
+                            ]}
+                        >
+                            Map
+                        </Text>
+                    </Pressable>
                 </View>
             </View>
         </SafeAreaView>
@@ -73,6 +91,22 @@ function MainHeader({ activeTab, onChangeTab, onLogout }) {
 
 function MainScreen({ onLogout }) {
     const [activeTab, setActiveTab] = useState("home");
+
+    function renderActiveScreen() {
+        if (activeTab === "home") {
+            return <CameraScreen />;
+        }
+
+        if (activeTab === "history") {
+            return <HistoryScreen />;
+        }
+
+        if (activeTab === "map") {
+            return <MapScreen />;
+        }
+
+        return <CameraScreen />;
+    }
 
     return (
         <SafeAreaView style={styles.mainSafeArea} edges={["bottom"]}>
@@ -83,7 +117,7 @@ function MainScreen({ onLogout }) {
             />
 
             <View style={styles.screenContainer}>
-                {activeTab === "home" ? <CameraScreen /> : <HistoryScreen />}
+                {renderActiveScreen()}
             </View>
         </SafeAreaView>
     );
@@ -128,6 +162,7 @@ export default function AppNavigator() {
                     <Stack.Screen name="Login">
                         {(props) => <LoginScreen {...props} onLoginSuccess={loadSession} />}
                     </Stack.Screen>
+
                     <Stack.Screen name="Signup">
                         {(props) => (
                             <SignupScreen {...props} onSignupSuccess={loadSession} />
@@ -182,7 +217,7 @@ const styles = StyleSheet.create({
     },
     tabRow: {
         flexDirection: "row",
-        gap: 10,
+        gap: 8,
     },
     tabButton: {
         flex: 1,
@@ -195,7 +230,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#E8F5E9",
     },
     tabButtonText: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: "700",
         color: "#516072",
     },

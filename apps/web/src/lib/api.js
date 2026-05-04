@@ -1,35 +1,77 @@
-export async function predictImage(file) {
-  const form = new FormData();
-  form.append("file", file);
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
-  const res = await fetch("http://localhost:8080/api/v1/predict", {
-    method: "POST",
-    body: form,
-  });
+export async function loginUser(payload) {
+    const res = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
 
-  if (!res.ok) throw new Error("Predict failed");
-  return res.json(); // { label, confidence, binColor, tips[] }
+    const text = await res.text();
+
+    if (!res.ok) {
+        throw new Error(text || "Login failed");
+    }
+
+    return text ? JSON.parse(text) : {};
 }
 
-// ✅ NEW: YOLO multi-detection endpoint (ai-service)
-export async function predictYolo(file) {
-  const form = new FormData();
-  form.append("file", file);
+export async function signupUser(payload) {
+    const res = await fetch(`${BACKEND_URL}/api/v1/auth/signup`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
 
-  // default: local YOLO service (uvicorn ... --port 8001)
-  const baseUrl = import.meta.env.VITE_YOLO_URL || "http://localhost:8001";
-
-  const res = await fetch(`${baseUrl}/yolo/predict`, {
-    method: "POST",
-    body: form,
-  });
-
-  if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "YOLO predict failed");
-  }
 
-  return res.json();
-  // expected:
-  // { imageWidth, imageHeight, detections: [{id,label,binColor,confidence,bbox:{x,y,width,height}}] }
+    if (!res.ok) {
+        throw new Error(text || "Signup failed");
+    }
+
+    return text ? JSON.parse(text) : {};
+}
+
+export async function predictImage(file, token) {
+    const form = new FormData();
+    form.append("file", file);
+
+    const headers = {};
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    const res = await fetch(`${BACKEND_URL}/api/v1/predict`, {
+        method: "POST",
+        headers,
+        body: form,
+    });
+
+    const text = await res.text();
+
+    if (!res.ok) {
+        throw new Error(text || "Predict failed");
+    }
+
+    return text ? JSON.parse(text) : {};
+}
+
+export async function getMyHistory(token) {
+    const res = await fetch(`${BACKEND_URL}/api/v1/history/me`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    const text = await res.text();
+
+    if (!res.ok) {
+        throw new Error(text || "History request failed");
+    }
+
+    return text ? JSON.parse(text) : [];
 }

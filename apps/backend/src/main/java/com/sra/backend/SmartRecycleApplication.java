@@ -10,9 +10,4 @@ public class SmartRecycleApplication {
   public static void main(String[] args) {
     SpringApplication.run(SmartRecycleApplication.class, args);
   }
-
-  @Bean
-  public RestTemplate restTemplate() {
-    return new RestTemplate();
-  }
 }

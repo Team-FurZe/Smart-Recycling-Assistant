@@ -1,30 +1,37 @@
 import MainLayout from "../layouts/MainLayout.jsx";
 import Hero from "../components/Hero.jsx";
 import DetectionPanel from "../components/DetectionPanel.jsx";
+import { getStoredUser } from "../lib/auth";
+import "../styles/home-page.css";
 
 export default function Home() {
-  return (
-    <MainLayout>
-      <section id="home" style={{ padding: "56px 0 24px" }}>
-        <div className="sra-container content-panel">
-          <Hero />
-        </div>
-      </section>
+    const user = getStoredUser();
 
-      <section id="demo" style={{ padding: "32px 0" }}>
-        <div className="sra-container content-panel">
-          <DetectionPanel />
-        </div>
-      </section>
+    const displayName =
+        user?.username || user?.fullName || user?.name || user?.email || "User";
 
-      <section id="about" style={{ padding: "32px 0 80px" }}>
-        <div className="sra-container content-panel">
-          <h2 style={{ marginTop: 0 }}>About</h2>
-          <p style={{ marginBottom: 0 }}>
-            Smart Recycle Assistant helps classify waste into recyclable categories using computer vision.
-          </p>
-        </div>
-      </section>
-    </MainLayout>
-  );
+    return (
+        <MainLayout>
+            <section className="home-page">
+                <div className="home-page__welcome">
+                    <div>
+                        <p className="home-page__eyebrow">Welcome back</p>
+                        <h1 className="home-page__title">{displayName}</h1>
+                        <p className="home-page__subtitle">
+                            Upload a waste image, review detections, and get recycling guidance
+                            in a clean and simple interface.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="home-page__hero">
+                    <Hero />
+                </div>
+
+                <div className="home-page__panel" id="demo">
+                    <DetectionPanel />
+                </div>
+            </section>
+        </MainLayout>
+    );
 }

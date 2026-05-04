@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { predictYolo } from "../lib/api";
+import { predictImage } from "../lib/api";
+import { getToken } from "../lib/auth";
 import ImageWithDetections from "./ImageWithDetections";
 import DetectionsList from "./DetectionsList";
 import "../styles/panel.css";
@@ -106,13 +107,14 @@ export default function DetectionPanel() {
 
     setLoading(true);
     try {
-      const yoloRes = await predictYolo(file);
-      setResult(yoloRes);
+        const token = localStorage.getItem("token");
+        const yoloRes = await predictImage(file, token);
+        setResult(yoloRes);
 
-      // reset per new predict
-      setOverrides({});
-      setTriedById({});
-      setRetryStateById({});
+        // reset per new predict
+        setOverrides({});
+        setTriedById({});
+        setRetryStateById({});
     } catch (err) {
       alert(err?.message || "YOLO Predict error");
     } finally {
@@ -135,7 +137,8 @@ export default function DetectionPanel() {
 
     try {
       const cropFile = await cropFileFromBBox(file, det.bbox);
-      const cropRes = await predictYolo(cropFile);
+      const token = localStorage.getItem("token");
+      const cropRes = await predictImage(cropFile, token);
 
       const currentLabel = overrides[det.id] || det.label;
       const tried = triedById[det.id] || [];

@@ -28,11 +28,17 @@ pnpm-debug.log*
 # Environment files
 # (Keep .env.example files)
 # =========================
-.env
-.env.*
-apps/**/.env
-apps/**/.env.*
-!*.example
+# Local/private environment files
+.env.local
+.env.*.local
+apps/**/.env.local
+apps/**/.env.*.local
+
+# Keep normal env and example env files
+!.env
+!apps/**/.env
+!.env.example
+!apps/**/.env.example
 
 # =========================
 # Node / Web (Vite React)

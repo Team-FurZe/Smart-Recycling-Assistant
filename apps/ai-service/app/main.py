@@ -69,8 +69,8 @@ model = YOLO(str(MODEL_PATH))
 # ---------------------------------------------------
 # Increase CONF_THRESH to reduce false positives (and show NO_WASTE more often)
 # Decrease CONF_THRESH to detect more objects (but may include more false positives)
-CONF_THRESH = 0.35
-IOU_THRESH = 0.60
+CONF_THRESH = 0.50
+IOU_THRESH = 0.45
 
 
 # ---------------------------------------------------

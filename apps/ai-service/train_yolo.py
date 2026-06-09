@@ -28,15 +28,15 @@ def train_yolo():
     # Write the merged dataset yaml path manually here.
     data_yaml_path = r"C:\Projects\Smart Recycling Assistant\Dataset\merged_garbage_dataset\data.yaml"
 
-    epochs = 100
-    imgsz = 640
-    batch = 16
-    model_name = "yolo11n.pt"
+    model_name = "yolo11s.pt"
+    epochs = 150
+    imgsz = 768
+    batch = 8
+    patience = 40
+    cache = True
     run_name = "merged_garbage_training_v1"
     project_dir = "yolo_runs"
     workers = 8
-    patience = 20
-    cache = False
 
     print("=" * 70)
     print("YOLO TRAINING SCRIPT STARTED")
@@ -84,13 +84,26 @@ def train_yolo():
         epochs=epochs,
         imgsz=imgsz,
         batch=batch,
-        project=project_dir,
-        name=run_name,
-        workers=workers,
+        project="yolo_runs",
+        name="garbage_yolo11s_v2",
+        workers=4,
         patience=patience,
         device=device,
         pretrained=True,
         cache=cache,
+        optimizer="AdamW",
+        lr0=0.001,
+        cos_lr=True,
+        close_mosaic=10,
+        mosaic=0.7,
+        mixup=0.1,
+        degrees=10,
+        translate=0.1,
+        scale=0.5,
+        fliplr=0.5,
+        hsv_h=0.015,
+        hsv_s=0.5,
+        hsv_v=0.4,
         verbose=True,
     )
 

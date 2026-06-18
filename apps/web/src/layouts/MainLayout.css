@@ -125,6 +125,47 @@
     padding: 28px 20px 36px;
 }
 
+:root[data-theme="dark"] .app-shell {
+    background:
+            radial-gradient(circle at top left, rgba(76, 175, 80, 0.12), transparent 25%),
+            radial-gradient(circle at top right, rgba(33, 150, 243, 0.1), transparent 25%),
+            #0f1722;
+    color: #e8edf5;
+}
+
+:root[data-theme="dark"] .app-header {
+    background: rgba(20, 32, 51, 0.92);
+    border-bottom-color: #263244;
+}
+
+:root[data-theme="dark"] .app-brand,
+:root[data-theme="dark"] .app-user__name {
+    color: #f8fbff;
+}
+
+:root[data-theme="dark"] .app-nav__link {
+    color: #b9c4d3;
+}
+
+:root[data-theme="dark"] .app-nav__link:hover {
+    background: #263244;
+    color: #ffffff;
+}
+
+:root[data-theme="dark"] .app-nav__link--active {
+    background: #173a24;
+    color: #86efac;
+}
+
+:root[data-theme="dark"] .app-user__label {
+    color: #91a0b5;
+}
+
+:root[data-theme="dark"] .app-logout-btn {
+    background: #e8edf5;
+    color: #142033;
+}
+
 @media (max-width: 860px) {
     .app-header__inner {
         flex-wrap: wrap;

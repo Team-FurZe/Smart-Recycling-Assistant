@@ -387,3 +387,78 @@
 .map-page__location-scroll::-webkit-scrollbar-thumb:hover {
     background: #15803d;
 }
+
+:root[data-theme="dark"] .map-page__header {
+    background:
+            radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 34%),
+            linear-gradient(135deg, rgba(22, 163, 74, 0.16), rgba(23, 34, 53, 0.96));
+    border-color: #2a3850;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-theme="dark"] .map-page__title,
+:root[data-theme="dark"] .map-page__list h2,
+:root[data-theme="dark"] .map-page__location-text strong,
+:root[data-theme="dark"] .map-page__location-text b {
+    color: #f8fbff;
+}
+
+:root[data-theme="dark"] .map-page__subtitle,
+:root[data-theme="dark"] .map-page__count small,
+:root[data-theme="dark"] .map-page__list-header p,
+:root[data-theme="dark"] .map-page__location-text em,
+:root[data-theme="dark"] .map-page__empty span {
+    color: #b9c4d3;
+}
+
+:root[data-theme="dark"] .map-page__count,
+:root[data-theme="dark"] .map-page__map-card,
+:root[data-theme="dark"] .map-page__list,
+:root[data-theme="dark"] .map-page__empty {
+    background: #172235 !important;
+    border-color: #2a3850 !important;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-theme="dark"] .map-page__location {
+    background: #121c2d !important;
+    border-color: #2a3850 !important;
+}
+
+:root[data-theme="dark"] .map-page__location:hover,
+:root[data-theme="dark"] .map-page__location--active {
+    background: rgba(22, 163, 74, 0.14);
+    border-color: rgba(134, 239, 172, 0.5);
+}
+
+:root[data-theme="dark"] .map-page__my-location-btn {
+    background: #172235 !important;
+    color: #f8fbff;
+}
+
+:root[data-theme="dark"] .map-page__location-scroll::-webkit-scrollbar-track {
+    background: #121c2d;
+}
+
+:root[data-theme="dark"] .map-page__info-window {
+    background: #172235;
+    color: #f8fbff;
+}
+
+:root[data-theme="dark"] .map-page__info-window h3 {
+    color: #f8fbff;
+}
+
+:root[data-theme="dark"] .map-page__info-window span {
+    color: #b9c4d3;
+}
+
+:root[data-theme="dark"] .gm-style .gm-style-iw-c,
+:root[data-theme="dark"] .gm-style .gm-style-iw-d {
+    background: #172235 !important;
+    color: #f8fbff !important;
+}
+
+:root[data-theme="dark"] .gm-style .gm-style-iw-tc::after {
+    background: #172235 !important;
+}

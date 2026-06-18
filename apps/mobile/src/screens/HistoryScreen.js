@@ -44,7 +44,21 @@ function buildImageUrl(storedImagePath) {
     return `${BACKEND_URL}${normalized}`;
 }
 
-export default function HistoryScreen() {
+function getColors(theme) {
+    const dark = theme === "dark";
+    return {
+        page: dark ? "#0F1722" : "#F5F7FB",
+        card: dark ? "#172235" : "#FFFFFF",
+        nested: dark ? "#121C2D" : "#F8FBFF",
+        border: dark ? "#2A3850" : "#D9E1EA",
+        image: dark ? "#0F1722" : "#E8EDF4",
+        text: dark ? "#F8FBFF" : "#142033",
+        muted: dark ? "#B9C4D3" : "#607080",
+        subtle: dark ? "#91A0B5" : "#718096",
+    };
+}
+
+export default function HistoryScreen({ theme = "light" }) {
     const [items, setItems] = useState([]);
     const [expandedId, setExpandedId] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -113,30 +127,32 @@ export default function HistoryScreen() {
         return "Prediction available";
     }
 
+    const colors = getColors(theme);
+
     function renderDetails(predictionJson) {
         const parsed = parsePrediction(predictionJson);
 
         if (!parsed) {
-            return <Text style={styles.detailText}>Prediction data could not be parsed.</Text>;
+            return <Text style={[styles.detailText, { color: colors.muted }]}>Prediction data could not be parsed.</Text>;
         }
 
         if (parsed.noWaste) {
-            return <Text style={styles.detailText}>No detectable waste found in this image.</Text>;
+            return <Text style={[styles.detailText, { color: colors.muted }]}>No detectable waste found in this image.</Text>;
         }
 
         if (!Array.isArray(parsed.detections) || parsed.detections.length === 0) {
-            return <Text style={styles.detailText}>No detection details available.</Text>;
+            return <Text style={[styles.detailText, { color: colors.muted }]}>No detection details available.</Text>;
         }
 
         return (
             <View style={styles.detailList}>
                 {parsed.detections.map((item, index) => (
-                    <View key={item.id || `${item.label}-${index}`} style={styles.detailCard}>
-                        <Text style={styles.detailTitle}>{item.label}</Text>
-                        <Text style={styles.detailText}>
+                    <View key={item.id || `${item.label}-${index}`} style={[styles.detailCard, { backgroundColor: colors.card }]}>
+                        <Text style={[styles.detailTitle, { color: colors.text }]}>{item.label}</Text>
+                        <Text style={[styles.detailText, { color: colors.muted }]}>
                             Confidence: {((item.confidence || 0) * 100).toFixed(2)}%
                         </Text>
-                        <Text style={styles.detailText}>Bin Color: {item.binColor || "-"}</Text>
+                        <Text style={[styles.detailText, { color: colors.muted }]}>Bin Color: {item.binColor || "-"}</Text>
                     </View>
                 ))}
             </View>
@@ -145,7 +161,7 @@ export default function HistoryScreen() {
 
     if (loading) {
         return (
-            <View style={styles.center}>
+            <View style={[styles.center, { backgroundColor: colors.page }]}>
                 <ActivityIndicator size="large" color="#2E7D32" />
             </View>
         );
@@ -155,44 +171,52 @@ export default function HistoryScreen() {
         <FlatList
             data={filteredItems}
             keyExtractor={(item, index) => String(item.id || index)}
-            contentContainerStyle={styles.container}
+            contentContainerStyle={[styles.container, { backgroundColor: colors.page }]}
             refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={() => loadHistory(true)} />
             }
             ListHeaderComponent={
                 <View style={styles.headerWrap}>
-                    <View style={styles.heroCard}>
-                        <Text style={styles.title}>Prediction History</Text>
-                        <Text style={styles.subtitle}>
+                    <View style={[styles.heroCard, { backgroundColor: colors.card }]}>
+                        <Text style={[styles.title, { color: colors.text }]}>Prediction History</Text>
+                        <Text style={[styles.subtitle, { color: colors.muted }]}>
                             Review previous uploads, labels, and bounding boxes.
                         </Text>
                     </View>
 
                     <TextInput
-                        style={styles.searchInput}
+                        placeholderTextColor={colors.subtle}
+                        style={[
+                            styles.searchInput,
+                            {
+                                backgroundColor: colors.card,
+                                borderColor: colors.border,
+                                color: colors.text,
+                            },
+                        ]}
                         placeholder="Search by file name or label..."
                         value={search}
                         onChangeText={setSearch}
                     />
                 </View>
             }
-            ListEmptyComponent={<Text style={styles.empty}>No history found yet.</Text>}
+            ListEmptyComponent={<Text style={[styles.empty, { color: colors.muted }]}>No history found yet.</Text>}
             renderItem={({ item }) => (
-                <View style={styles.historyCard}>
+                <View style={[styles.historyCard, { backgroundColor: colors.card }]}>
                     {item.imageUrl ? (
                         <HistoryImageOverlay
                             imageUrl={item.imageUrl}
                             predictionJson={item.predictionJson}
                         />
                     ) : (
-                        <View style={styles.noImageBox}>
-                            <Text style={styles.noImageText}>No image</Text>
+                        <View style={[styles.noImageBox, { backgroundColor: colors.image }]}>
+                            <Text style={[styles.noImageText, { color: colors.muted }]}>No image</Text>
                         </View>
                     )}
 
-                    <Text style={styles.fileName}>{item.originalFileName || "Untitled file"}</Text>
-                    <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
-                    <Text style={styles.summary}>{renderSummary(item.predictionJson)}</Text>
+                    <Text style={[styles.fileName, { color: colors.text }]}>{item.originalFileName || "Untitled file"}</Text>
+                    <Text style={[styles.dateText, { color: colors.subtle }]}>{formatDate(item.createdAt)}</Text>
+                    <Text style={[styles.summary, { color: colors.muted }]}>{renderSummary(item.predictionJson)}</Text>
 
                     <Pressable
                         style={styles.detailButton}
@@ -204,7 +228,7 @@ export default function HistoryScreen() {
                     </Pressable>
 
                     {expandedId === item.id && (
-                        <View style={styles.detailsWrap}>{renderDetails(item.predictionJson)}</View>
+                        <View style={[styles.detailsWrap, { backgroundColor: colors.nested }]}>{renderDetails(item.predictionJson)}</View>
                     )}
                 </View>
             )}

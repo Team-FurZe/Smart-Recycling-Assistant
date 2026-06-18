@@ -1,0 +1,140 @@
+.sra-detection-tip-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border-bottom: 2px dotted var(--tip-color);
+  color: #142033;
+  cursor: help;
+  outline: none;
+}
+
+.sra-detection-tip-trigger:focus-visible {
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.16);
+}
+
+.sra-detection-tip-card {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  z-index: 20;
+  width: min(280px, calc(100vw - 48px));
+  padding: 14px;
+  border: 1px solid #dbe7df;
+  border-top: 4px solid var(--tip-color);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.18);
+  color: #142033;
+  font-weight: 400;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.sra-detection-tip-trigger:hover .sra-detection-tip-card,
+.sra-detection-tip-trigger:focus .sra-detection-tip-card,
+.sra-detection-tip-trigger:focus-within .sra-detection-tip-card {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.sra-detection-tip-card__title,
+.sra-detection-tip-card__status,
+.sra-detection-tip-card__label {
+  display: block;
+}
+
+.sra-detection-tip-card__title {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.sra-detection-tip-card__status {
+  margin-top: 3px;
+  color: #2e7d32;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.sra-detection-tip-card__label {
+  margin-top: 10px;
+  color: #7a8796;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sra-detection-tip-card__list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #526071;
+  font-size: 0.86rem;
+}
+
+.sra-detection-tip-card__list li + li {
+  margin-top: 5px;
+}
+
+.sra-detection-item {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.sra-detection-meta,
+.sra-detection-message {
+  color: #555;
+  font-size: 13px;
+}
+
+.sra-detection-message {
+  margin-top: 8px;
+}
+
+:root[data-theme="dark"] .sra-panel {
+  color: #f8fbff;
+}
+
+:root[data-theme="dark"] .sra-panel__title,
+:root[data-theme="dark"] .sra-card__title,
+:root[data-theme="dark"] .sra-detection-tip-trigger {
+  color: #f8fbff;
+}
+
+:root[data-theme="dark"] .sra-panel__subtitle,
+:root[data-theme="dark"] .sra-empty,
+:root[data-theme="dark"] .sra-detection-meta,
+:root[data-theme="dark"] .sra-detection-message {
+  color: #b9c4d3;
+}
+
+:root[data-theme="dark"] .sra-card,
+:root[data-theme="dark"] .sra-detection-item {
+  background: #121c2d;
+  border-color: #2a3850;
+}
+
+:root[data-theme="dark"] .sra-input {
+  background: #0f1722;
+  border-color: #35455d;
+  color: #f8fbff;
+}
+
+:root[data-theme="dark"] .sra-empty {
+  background: #0f1722;
+  border-color: #35455d;
+}
+
+:root[data-theme="dark"] .sra-detection-tip-card {
+  background: #172235;
+  border-color: #2a3850;
+  color: #f8fbff;
+}
+
+:root[data-theme="dark"] .sra-detection-tip-card__list {
+  color: #b9c4d3;
+}

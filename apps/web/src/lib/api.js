@@ -1,5 +1,23 @@
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
+async function parseResponse(res, fallback) {
+    const text = await res.text();
+
+    if (!res.ok) {
+        let errorBody = null;
+
+        try {
+            errorBody = JSON.parse(text);
+        } catch {
+            errorBody = null;
+        }
+
+        throw new Error(errorBody?.message || errorBody?.error || text || fallback);
+    }
+
+    return text ? JSON.parse(text) : {};
+}
+
 export async function loginUser(payload) {
     const res = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
         method: "POST",
@@ -9,13 +27,7 @@ export async function loginUser(payload) {
         body: JSON.stringify(payload),
     });
 
-    const text = await res.text();
-
-    if (!res.ok) {
-        throw new Error(text || "Login failed");
-    }
-
-    return text ? JSON.parse(text) : {};
+    return parseResponse(res, "Login failed");
 }
 
 export async function signupUser(payload) {
@@ -27,13 +39,7 @@ export async function signupUser(payload) {
         body: JSON.stringify(payload),
     });
 
-    const text = await res.text();
-
-    if (!res.ok) {
-        throw new Error(text || "Signup failed");
-    }
-
-    return text ? JSON.parse(text) : {};
+    return parseResponse(res, "Signup failed");
 }
 
 export async function predictImage(file, token) {
@@ -51,13 +57,7 @@ export async function predictImage(file, token) {
         body: form,
     });
 
-    const text = await res.text();
-
-    if (!res.ok) {
-        throw new Error(text || "Predict failed");
-    }
-
-    return text ? JSON.parse(text) : {};
+    return parseResponse(res, "Predict failed");
 }
 
 export async function getMyHistory(token) {
@@ -67,11 +67,43 @@ export async function getMyHistory(token) {
         },
     });
 
-    const text = await res.text();
+    const data = await parseResponse(res, "History request failed");
+    return Array.isArray(data) ? data : [];
+}
 
-    if (!res.ok) {
-        throw new Error(text || "History request failed");
-    }
+export async function updateProfile(payload, token) {
+    const res = await fetch(`${BACKEND_URL}/api/v1/account/profile`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+    });
 
-    return text ? JSON.parse(text) : [];
+    return parseResponse(res, "Profile update failed");
+}
+
+export async function changePassword(payload, token) {
+    const res = await fetch(`${BACKEND_URL}/api/v1/account/password`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    await parseResponse(res, "Password change failed");
+}
+
+export async function clearMyHistory(token) {
+    const res = await fetch(`${BACKEND_URL}/api/v1/history/me`, {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    await parseResponse(res, "Clear history failed");
 }

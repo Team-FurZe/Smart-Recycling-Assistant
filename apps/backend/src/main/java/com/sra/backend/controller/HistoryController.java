@@ -24,4 +24,9 @@ public class HistoryController {
     public HistoryItemResponse getMyHistoryItem(@PathVariable Long id, Authentication authentication) {
         return historyService.getMyHistoryItem(id, authentication.getName());
     }
+
+    @DeleteMapping("/me")
+    public void clearMyHistory(Authentication authentication) {
+        historyService.clearMyHistory(authentication.getName());
+    }
 }

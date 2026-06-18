@@ -10,6 +10,21 @@ export async function saveAuth(token, user) {
     ]);
 }
 
+export async function saveAuthResponse(authResponse) {
+    const token = authResponse?.token || authResponse?.accessToken || authResponse?.jwt;
+    const user = authResponse?.user || {
+        userId: authResponse?.userId,
+        username: authResponse?.username,
+        email: authResponse?.email,
+    };
+
+    if (!token) {
+        throw new Error("Token not found in auth response.");
+    }
+
+    await saveAuth(token, user);
+}
+
 export async function getToken() {
     return AsyncStorage.getItem(TOKEN_KEY);
 }

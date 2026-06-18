@@ -18,3 +18,12 @@
 .app-footer__inner p {
     margin: 0;
 }
+
+:root[data-theme="dark"] .app-footer {
+    border-top-color: #263244;
+    background: rgba(20, 32, 51, 0.92);
+}
+
+:root[data-theme="dark"] .app-footer__inner {
+    color: #b9c4d3;
+}

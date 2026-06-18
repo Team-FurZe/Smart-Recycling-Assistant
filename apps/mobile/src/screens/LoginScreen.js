@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { loginUser } from "../lib/api";
-import { saveAuth } from "../lib/authStorage";
+import { saveAuthResponse } from "../lib/authStorage";
 
 export default function LoginScreen({ onLoginSuccess }) {
     const navigation = useNavigation();
@@ -33,14 +33,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                 password,
             });
 
-            const token = data.token || data.accessToken || data.jwt;
-            const user = data.user || { email: email.trim() };
-
-            if (!token) {
-                throw new Error("Token not found in login response.");
-            }
-
-            await saveAuth(token, user);
+            await saveAuthResponse(data);
             onLoginSuccess?.();
         } catch (e) {
             Alert.alert("Login failed", e.message || "Unknown error");

@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface PredictionHistoryRepository extends JpaRepository<PredictionHistory, Long> {
     List<PredictionHistory> findByUserOrderByCreatedAtDesc(User user);
     Optional<PredictionHistory> findByIdAndUser(Long id, User user);
+    void deleteByUser(User user);
 }

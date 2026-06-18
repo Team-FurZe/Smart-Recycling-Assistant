@@ -1,5 +1,7 @@
 package com.sra.backend.service;
 
+import com.sra.backend.dto.account.ChangePasswordRequest;
+import com.sra.backend.dto.account.UpdateProfileRequest;
 import com.sra.backend.dto.auth.AuthResponse;
 import com.sra.backend.dto.auth.LoginRequest;
 import com.sra.backend.dto.auth.SignupRequest;
@@ -8,6 +10,7 @@ import com.sra.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -67,5 +70,50 @@ public class AuthService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .build();
+    }
+
+    @Transactional
+    public AuthResponse updateProfile(String currentEmail, UpdateProfileRequest request) {
+        User user = userRepository.findByEmailIgnoreCase(currentEmail)
+                .orElseThrow(() -> new RuntimeException("User not found."));
+
+        String normalizedUsername = request.getUsername().trim();
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+
+        if (!user.getUsername().equalsIgnoreCase(normalizedUsername)
+                && userRepository.existsByUsernameIgnoreCase(normalizedUsername)) {
+            throw new RuntimeException("Username is already taken.");
+        }
+
+        if (!user.getEmail().equalsIgnoreCase(normalizedEmail)
+                && userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+            throw new RuntimeException("Email is already registered.");
+        }
+
+        user.setUsername(normalizedUsername);
+        user.setEmail(normalizedEmail);
+
+        User savedUser = userRepository.save(user);
+        String token = jwtService.generateToken(savedUser.getEmail());
+
+        return AuthResponse.builder()
+                .token(token)
+                .userId(savedUser.getId())
+                .username(savedUser.getUsername())
+                .email(savedUser.getEmail())
+                .build();
+    }
+
+    @Transactional
+    public void changePassword(String currentEmail, ChangePasswordRequest request) {
+        User user = userRepository.findByEmailIgnoreCase(currentEmail)
+                .orElseThrow(() -> new RuntimeException("User not found."));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Current password is incorrect.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 }

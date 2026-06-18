@@ -5,6 +5,7 @@ import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import History from "./pages/History.jsx";
 import MapPage from "./pages/Map.jsx";
+import Settings from "./pages/Settings.jsx";
 
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 
@@ -38,6 +39,15 @@ export default function App() {
                 element={
                     <ProtectedRoute>
                         <MapPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/settings"
+                element={
+                    <ProtectedRoute>
+                        <Settings />
                     </ProtectedRoute>
                 }
             />

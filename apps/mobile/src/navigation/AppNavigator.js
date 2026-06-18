@@ -17,19 +17,46 @@ import CameraScreen from "../screens/CameraScreen";
 import LiveCameraScreen from "../screens/LiveCameraScreen";
 import HistoryScreen from "../screens/HistoryScreen";
 import MapScreen from "../screens/MapScreen";
+import SettingsScreen from "../screens/SettingsScreen";
 import { clearAuth, getToken } from "../lib/authStorage";
+import { defaultSettings, readSettings, resolveTheme } from "../lib/preferences";
 
 const Stack = createNativeStackNavigator();
 
-function MainHeader({ activeTab, onChangeTab, onLogout }) {
-    return (
-        <SafeAreaView edges={["top"]} style={styles.safeHeader}>
-            <View style={styles.header}>
-                <View style={styles.headerTopRow}>
-                    <Text style={styles.headerTitle}>Smart Recycle Assistant</Text>
+const copy = {
+    en: {
+        home: "Home",
+        live: "Live",
+        history: "History",
+        map: "Map",
+        settings: "Settings",
+    },
+    tr: {
+        home: "Ana Sayfa",
+        live: "Canli",
+        history: "Gecmis",
+        map: "Harita",
+        settings: "Ayarlar",
+    },
+};
 
-                    <Pressable onPress={onLogout} style={styles.logoutIconButton}>
-                        <MaterialIcons name="logout" size={22} color="#142033" />
+function MainHeader({ activeTab, language, onChangeTab, onLogout, theme }) {
+    const labels = copy[language] || copy.en;
+    const isDark = theme === "dark";
+
+    return (
+        <SafeAreaView edges={["top"]} style={[styles.safeHeader, isDark && styles.safeHeaderDark]}>
+            <View style={[styles.header, isDark && styles.headerDark]}>
+                <View style={styles.headerTopRow}>
+                    <Text style={[styles.headerTitle, isDark && styles.headerTitleDark]}>
+                        Smart Recycle Assistant
+                    </Text>
+
+                    <Pressable
+                        onPress={onLogout}
+                        style={[styles.logoutIconButton, isDark && styles.logoutIconButtonDark]}
+                    >
+                        <MaterialIcons name="logout" size={22} color={isDark ? "#F8FBFF" : "#142033"} />
                     </Pressable>
                 </View>
 
@@ -38,16 +65,19 @@ function MainHeader({ activeTab, onChangeTab, onLogout }) {
                         onPress={() => onChangeTab("home")}
                         style={[
                             styles.tabButton,
+                            isDark && styles.tabButtonDark,
                             activeTab === "home" && styles.tabButtonActive,
+                            isDark && activeTab === "home" && styles.tabButtonActiveDark,
                         ]}
                     >
                         <Text
                             style={[
                                 styles.tabButtonText,
+                                isDark && styles.tabButtonTextDark,
                                 activeTab === "home" && styles.tabButtonTextActive,
                             ]}
                         >
-                            Home
+                            {labels.home}
                         </Text>
                     </Pressable>
 
@@ -55,16 +85,19 @@ function MainHeader({ activeTab, onChangeTab, onLogout }) {
                         onPress={() => onChangeTab("live")}
                         style={[
                             styles.tabButton,
+                            isDark && styles.tabButtonDark,
                             activeTab === "live" && styles.tabButtonActive,
+                            isDark && activeTab === "live" && styles.tabButtonActiveDark,
                         ]}
                     >
                         <Text
                             style={[
                                 styles.tabButtonText,
+                                isDark && styles.tabButtonTextDark,
                                 activeTab === "live" && styles.tabButtonTextActive,
                             ]}
                         >
-                            Live
+                            {labels.live}
                         </Text>
                     </Pressable>
 
@@ -72,16 +105,19 @@ function MainHeader({ activeTab, onChangeTab, onLogout }) {
                         onPress={() => onChangeTab("history")}
                         style={[
                             styles.tabButton,
+                            isDark && styles.tabButtonDark,
                             activeTab === "history" && styles.tabButtonActive,
+                            isDark && activeTab === "history" && styles.tabButtonActiveDark,
                         ]}
                     >
                         <Text
                             style={[
                                 styles.tabButtonText,
+                                isDark && styles.tabButtonTextDark,
                                 activeTab === "history" && styles.tabButtonTextActive,
                             ]}
                         >
-                            History
+                            {labels.history}
                         </Text>
                     </Pressable>
 
@@ -89,16 +125,39 @@ function MainHeader({ activeTab, onChangeTab, onLogout }) {
                         onPress={() => onChangeTab("map")}
                         style={[
                             styles.tabButton,
+                            isDark && styles.tabButtonDark,
                             activeTab === "map" && styles.tabButtonActive,
+                            isDark && activeTab === "map" && styles.tabButtonActiveDark,
                         ]}
                     >
                         <Text
                             style={[
                                 styles.tabButtonText,
+                                isDark && styles.tabButtonTextDark,
                                 activeTab === "map" && styles.tabButtonTextActive,
                             ]}
                         >
-                            Map
+                            {labels.map}
+                        </Text>
+                    </Pressable>
+
+                    <Pressable
+                        onPress={() => onChangeTab("settings")}
+                        style={[
+                            styles.tabButton,
+                            isDark && styles.tabButtonDark,
+                            activeTab === "settings" && styles.tabButtonActive,
+                            isDark && activeTab === "settings" && styles.tabButtonActiveDark,
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.tabButtonText,
+                                isDark && styles.tabButtonTextDark,
+                                activeTab === "settings" && styles.tabButtonTextActive,
+                            ]}
+                        >
+                            {labels.settings}
                         </Text>
                     </Pressable>
                 </View>
@@ -109,33 +168,55 @@ function MainHeader({ activeTab, onChangeTab, onLogout }) {
 
 function MainScreen({ onLogout }) {
     const [activeTab, setActiveTab] = useState("home");
+    const [settings, setSettings] = useState(defaultSettings);
+    const theme = resolveTheme(settings.theme);
+
+    useEffect(() => {
+        readSettings()
+            .then(setSettings)
+            .catch(() => setSettings(defaultSettings));
+    }, []);
 
     function renderActiveScreen() {
         if (activeTab === "home") {
-            return <CameraScreen />;
+            return <CameraScreen theme={theme} />;
         }
 
         if (activeTab === "history") {
-            return <HistoryScreen />;
+            return <HistoryScreen theme={theme} />;
         }
 
         if (activeTab === "live") {
-            return <LiveCameraScreen />;
+            return <LiveCameraScreen theme={theme} />;
         }
 
         if (activeTab === "map") {
-            return <MapScreen />;
+            return <MapScreen theme={theme} />;
         }
 
-        return <CameraScreen />;
+        if (activeTab === "settings") {
+            return (
+                <SettingsScreen
+                    onNavigate={setActiveTab}
+                    onPreferencesChange={setSettings}
+                />
+            );
+        }
+
+        return <CameraScreen theme={theme} />;
     }
 
     return (
-        <SafeAreaView style={styles.mainSafeArea} edges={["bottom"]}>
+        <SafeAreaView
+            style={[styles.mainSafeArea, theme === "dark" && styles.mainSafeAreaDark]}
+            edges={["bottom"]}
+        >
             <MainHeader
                 activeTab={activeTab}
+                language={settings.language}
                 onChangeTab={setActiveTab}
                 onLogout={onLogout}
+                theme={theme}
             />
 
             <View style={styles.screenContainer}>
@@ -207,16 +288,26 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#F5F7FB",
     },
+    mainSafeAreaDark: {
+        backgroundColor: "#0F1722",
+    },
     safeHeader: {
         backgroundColor: "#ffffff",
         borderBottomWidth: 1,
         borderBottomColor: "#E3E8EF",
+    },
+    safeHeaderDark: {
+        backgroundColor: "#142033",
+        borderBottomColor: "#263244",
     },
     header: {
         paddingHorizontal: 16,
         paddingTop: 8,
         paddingBottom: 12,
         backgroundColor: "#ffffff",
+    },
+    headerDark: {
+        backgroundColor: "#142033",
     },
     headerTopRow: {
         flexDirection: "row",
@@ -229,6 +320,9 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         color: "#142033",
     },
+    headerTitleDark: {
+        color: "#F8FBFF",
+    },
     logoutIconButton: {
         width: 38,
         height: 38,
@@ -236,6 +330,9 @@ const styles = StyleSheet.create({
         backgroundColor: "#EEF2F7",
         alignItems: "center",
         justifyContent: "center",
+    },
+    logoutIconButtonDark: {
+        backgroundColor: "#263244",
     },
     tabRow: {
         flexDirection: "row",
@@ -251,10 +348,19 @@ const styles = StyleSheet.create({
     tabButtonActive: {
         backgroundColor: "#E8F5E9",
     },
+    tabButtonDark: {
+        backgroundColor: "#263244",
+    },
+    tabButtonActiveDark: {
+        backgroundColor: "#173A24",
+    },
     tabButtonText: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: "700",
         color: "#516072",
+    },
+    tabButtonTextDark: {
+        color: "#C7D0DE",
     },
     tabButtonTextActive: {
         color: "#2E7D32",

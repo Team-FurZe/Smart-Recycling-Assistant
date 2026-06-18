@@ -44,6 +44,14 @@ public class HistoryService {
         return mapToResponse(item);
     }
 
+    @Transactional
+    public void clearMyHistory(String email) {
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new RuntimeException("User not found."));
+
+        predictionHistoryRepository.deleteByUser(user);
+    }
+
     private HistoryItemResponse mapToResponse(PredictionHistory entity) {
         String normalizedPath = entity.getStoredImagePath() == null
                 ? null

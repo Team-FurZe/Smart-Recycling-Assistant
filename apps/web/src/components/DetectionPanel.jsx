@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { predictImage } from "../lib/api";
-import { getToken } from "../lib/auth";
 import ImageWithDetections from "./ImageWithDetections";
 import DetectionsList from "./DetectionsList";
 import "../styles/panel.css";

@@ -37,6 +37,16 @@ function filterDetections(result) {
     );
 }
 
+function getColors(theme) {
+    const dark = theme === "dark";
+    return {
+        page: dark ? "#0F1722" : "#F5F7FB",
+        card: dark ? "#172235" : "#FFFFFF",
+        text: dark ? "#F8FBFF" : "#142033",
+        muted: dark ? "#B9C4D3" : "#607080",
+    };
+}
+
 function DetectionBoxes({ detections, imageWidth, imageHeight, layout }) {
     const scale = useMemo(() => {
         return {
@@ -75,7 +85,7 @@ function DetectionBoxes({ detections, imageWidth, imageHeight, layout }) {
     });
 }
 
-export default function LiveCameraScreen() {
+export default function LiveCameraScreen({ theme = "light" }) {
     const cameraRef = useRef(null);
     const timerRef = useRef(null);
     const abortRef = useRef(null);
@@ -226,12 +236,13 @@ export default function LiveCameraScreen() {
     const detections = useMemo(() => filterDetections(liveResult), [liveResult]);
     const imageWidth = liveResult?.imageWidth || layout.w || 1;
     const imageHeight = liveResult?.imageHeight || layout.h || 1;
+    const colors = getColors(theme);
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.title}>Live Detection</Text>
-                <Text style={styles.subtitle}>Real-time recyclable waste preview.</Text>
+        <View style={[styles.container, { backgroundColor: colors.page }]}>
+            <View style={[styles.header, { backgroundColor: colors.card }]}>
+                <Text style={[styles.title, { color: colors.text }]}>Live Detection</Text>
+                <Text style={[styles.subtitle, { color: colors.muted }]}>Real-time recyclable waste preview.</Text>
             </View>
 
             <View
@@ -284,7 +295,7 @@ export default function LiveCameraScreen() {
             </Pressable>
 
             <View style={styles.footerNote}>
-                <Text style={styles.footerText}>
+                <Text style={[styles.footerText, { color: colors.muted }]}>
                     Live detections are not saved to history.
                 </Text>
                 {liveBusy && <ActivityIndicator size="small" color="#2E7D32" />}

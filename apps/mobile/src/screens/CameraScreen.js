@@ -13,6 +13,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { predictImageFromUri } from "../lib/api";
 import { getToken } from "../lib/authStorage";
+import { getClassTip } from "../lib/recyclingTips";
 
 const STILL_IMAGE_WIDTH = 1024;
 const MIN_CONFIDENCE = 0.5;
@@ -34,6 +35,20 @@ function filterDetections(result) {
     return (result?.detections || []).filter(
         (det) => (det.confidence || 0) >= MIN_CONFIDENCE
     );
+}
+
+function getColors(theme) {
+    const dark = theme === "dark";
+    return {
+        page: dark ? "#0F1722" : "#F5F7FB",
+        card: dark ? "#172235" : "#FFFFFF",
+        nested: dark ? "#121C2D" : "#FAFCFF",
+        border: dark ? "#2A3850" : "#DCE5EF",
+        soft: dark ? "#263244" : "#E9EEF5",
+        image: dark ? "#0F1722" : "#E8EDF4",
+        text: dark ? "#F8FBFF" : "#142033",
+        muted: dark ? "#B9C4D3" : "#607080",
+    };
 }
 
 function DetectionBoxes({ detections, imageWidth, imageHeight, layout }) {
@@ -74,12 +89,13 @@ function DetectionBoxes({ detections, imageWidth, imageHeight, layout }) {
     });
 }
 
-export default function CameraScreen() {
+export default function CameraScreen({ theme = "light" }) {
     const [sourceUri, setSourceUri] = useState(null);
     const [predictUri, setPredictUri] = useState(null);
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [layout, setLayout] = useState({ w: 1, h: 1 });
+    const [activeTipId, setActiveTipId] = useState(null);
 
     const optimizeImage = useCallback(async (uri) => {
         try {
@@ -110,6 +126,7 @@ export default function CameraScreen() {
             setSourceUri(r.assets[0].uri);
             setPredictUri(null);
             setResult(null);
+            setActiveTipId(null);
         }
     }
 
@@ -129,6 +146,7 @@ export default function CameraScreen() {
             setSourceUri(r.assets[0].uri);
             setPredictUri(null);
             setResult(null);
+            setActiveTipId(null);
         }
     }
 
@@ -146,6 +164,7 @@ export default function CameraScreen() {
             const token = await getToken();
             const data = await predictImageFromUri(optimizedUri, token);
             setResult(data);
+            setActiveTipId(null);
         } catch (e) {
             Alert.alert("Prediction error", e.message ?? "Unknown error");
         } finally {
@@ -157,23 +176,24 @@ export default function CameraScreen() {
     const imageW = result?.imageWidth || 1;
     const imageH = result?.imageHeight || 1;
     const shownUri = predictUri || sourceUri;
+    const colors = getColors(theme);
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.heroCard}>
-                <Text style={styles.title}>Detect recyclable waste</Text>
-                <Text style={styles.subtitle}>
+        <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.page }]}>
+            <View style={[styles.heroCard, { backgroundColor: colors.card }]}>
+                <Text style={[styles.title, { color: colors.text }]}>Detect recyclable waste</Text>
+                <Text style={[styles.subtitle, { color: colors.muted }]}>
                     Take a photo or select one from the gallery, then review labels and boxes.
                 </Text>
             </View>
 
             <View style={styles.actionRow}>
-                <Pressable style={styles.secondaryButton} onPress={takePhoto}>
-                    <Text style={styles.secondaryButtonText}>Take Photo</Text>
+                <Pressable style={[styles.secondaryButton, { backgroundColor: colors.soft }]} onPress={takePhoto}>
+                    <Text style={[styles.secondaryButtonText, { color: colors.text }]}>Take Photo</Text>
                 </Pressable>
 
-                <Pressable style={styles.secondaryButton} onPress={pickFromGallery}>
-                    <Text style={styles.secondaryButtonText}>Choose Image</Text>
+                <Pressable style={[styles.secondaryButton, { backgroundColor: colors.soft }]} onPress={pickFromGallery}>
+                    <Text style={[styles.secondaryButtonText, { color: colors.text }]}>Choose Image</Text>
                 </Pressable>
             </View>
 
@@ -184,9 +204,9 @@ export default function CameraScreen() {
             </Pressable>
 
             {shownUri && (
-                <View style={styles.imageCard}>
+                <View style={[styles.imageCard, { backgroundColor: colors.card }]}>
                     <View
-                        style={styles.imageWrap}
+                        style={[styles.imageWrap, { backgroundColor: colors.image }]}
                         onLayout={(e) => {
                             const { width } = e.nativeEvent.layout;
                             setLayout({ w: width, h: width / (imageW / imageH) });
@@ -209,36 +229,78 @@ export default function CameraScreen() {
             )}
 
             {loading && (
-                <View style={styles.loadingCard}>
+                <View style={[styles.loadingCard, { backgroundColor: colors.card }]}>
                     <ActivityIndicator size="large" color="#2E7D32" />
                 </View>
             )}
 
             {result?.noWaste && (
-                <View style={styles.infoCard}>
-                    <Text style={styles.infoTitle}>NO_WASTE</Text>
-                    <Text style={styles.infoText}>No detectable waste found.</Text>
+                <View style={[styles.infoCard, { backgroundColor: colors.card }]}>
+                    <Text style={[styles.infoTitle, { color: colors.text }]}>NO_WASTE</Text>
+                    <Text style={[styles.infoText, { color: colors.muted }]}>No detectable waste found.</Text>
                 </View>
             )}
 
             {!result?.noWaste && detections.length > 0 && (
-                <View style={styles.infoCard}>
-                    <Text style={styles.sectionTitle}>Detections ({detections.length})</Text>
+                <View style={[styles.infoCard, { backgroundColor: colors.card }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Detections ({detections.length})</Text>
 
-                    {detections.map((det, index) => (
-                        <View
-                            key={det.id || `${det.label}-${index}-card`}
+                    {detections.map((det, index) => {
+                        const tipId = String(det.id || `${det.label}-${index}`);
+                        const classTip = getClassTip(det.label);
+                        const color = getBinColor(det.label, det.binColor);
+                        const isTipActive = activeTipId === tipId;
+
+                        return (
+                        <Pressable
+                            key={`${tipId}-card`}
                             style={[
                                 styles.detectCard,
-                                { borderColor: getBinColor(det.label, det.binColor) },
+                                { backgroundColor: colors.card, borderColor: color },
                             ]}
                         >
-                            <Text style={styles.detectTitle}>{det.label}</Text>
-                            <Text style={styles.detectText}>
+                            <Pressable
+                                style={styles.detectTitleButton}
+                                onPress={() => setActiveTipId(tipId)}
+                            >
+                                <Text style={[styles.detectTitle, { borderBottomColor: color, color: colors.text }]}>
+                                    {det.label}
+                                </Text>
+                            </Pressable>
+
+                            {isTipActive && (
+                                <View style={[styles.tipCard, { backgroundColor: colors.nested, borderColor: colors.border, borderTopColor: color }]}>
+                                    <View style={styles.tipHeader}>
+                                        <View style={styles.tipHeaderText}>
+                                            <Text style={[styles.tipTitle, { color: colors.text }]}>{classTip.title}</Text>
+                                            <Text style={styles.tipStatus}>
+                                                {classTip.recyclable ? "Recyclable" : "Special collection required"}
+                                            </Text>
+                                        </View>
+
+                                        <Pressable
+                                            style={styles.tipCloseButton}
+                                            onPress={() => setActiveTipId(null)}
+                                            hitSlop={10}
+                                        >
+                                            <Text style={styles.tipCloseText}>×</Text>
+                                        </Pressable>
+                                    </View>
+                                    <Text style={styles.tipLabel}>Tips</Text>
+                                    {classTip.tips.map((tip) => (
+                                        <Text key={tip} style={[styles.tipText, { color: colors.muted }]}>
+                                            - {tip}
+                                        </Text>
+                                    ))}
+                                </View>
+                            )}
+
+                            <Text style={[styles.detectText, { color: colors.muted }]}>
                                 Confidence: {((det.confidence || 0) * 100).toFixed(1)}%
                             </Text>
-                        </View>
-                    ))}
+                        </Pressable>
+                        );
+                    })}
                 </View>
             )}
         </ScrollView>
@@ -355,13 +417,74 @@ const styles = StyleSheet.create({
         padding: 14,
         backgroundColor: "#fff",
     },
+    detectTitleButton: {
+        alignSelf: "flex-start",
+    },
     detectTitle: {
         fontWeight: "700",
         fontSize: 16,
         color: "#142033",
         marginBottom: 4,
+        borderBottomWidth: 2,
     },
     detectText: {
         color: "#607080",
+    },
+    tipCard: {
+        borderWidth: 1,
+        borderColor: "#DCE5EF",
+        borderTopWidth: 4,
+        borderRadius: 12,
+        padding: 12,
+        marginTop: 8,
+        marginBottom: 8,
+        backgroundColor: "#FAFCFF",
+    },
+    tipHeader: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: 12,
+    },
+    tipHeaderText: {
+        flex: 1,
+    },
+    tipCloseButton: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#EEF2F7",
+    },
+    tipCloseText: {
+        color: "#142033",
+        fontSize: 20,
+        fontWeight: "700",
+        lineHeight: 22,
+    },
+    tipTitle: {
+        color: "#142033",
+        fontSize: 16,
+        fontWeight: "700",
+    },
+    tipStatus: {
+        color: "#2E7D32",
+        fontSize: 12,
+        fontWeight: "700",
+        marginTop: 2,
+    },
+    tipLabel: {
+        color: "#7A8796",
+        fontSize: 11,
+        fontWeight: "700",
+        letterSpacing: 0.6,
+        marginTop: 10,
+        textTransform: "uppercase",
+    },
+    tipText: {
+        color: "#526071",
+        lineHeight: 19,
+        marginTop: 4,
     },
 });

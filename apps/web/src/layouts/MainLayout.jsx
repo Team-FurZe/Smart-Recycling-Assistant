@@ -1,13 +1,46 @@
+import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import Footer from "../components/footer/Footer";
 import { getStoredUser, logout } from "../lib/auth";
+import { applyStoredTheme, readSettings } from "../lib/preferences";
 
 import "./MainLayout.css";
 
 export default function MainLayout({ children }) {
     const navigate = useNavigate();
     const user = getStoredUser();
+    const [settings, setSettings] = useState(readSettings);
+
+    const copy = settings.language === "tr"
+        ? {
+            home: "Ana Sayfa",
+            history: "Gecmis",
+            map: "Harita",
+            settings: "Ayarlar",
+            signedInAs: "Giris yapan",
+            logout: "Cikis",
+        }
+        : {
+            home: "Home",
+            history: "History",
+            map: "Map",
+            settings: "Settings",
+            signedInAs: "Signed in as",
+            logout: "Logout",
+        };
+
+    useEffect(() => {
+        applyStoredTheme();
+
+        function handleSettingsChange() {
+            setSettings(readSettings());
+            applyStoredTheme();
+        }
+
+        window.addEventListener("sra-settings-change", handleSettingsChange);
+        return () => window.removeEventListener("sra-settings-change", handleSettingsChange);
+    }, []);
 
     function handleLogout() {
         logout();
@@ -42,7 +75,7 @@ export default function MainLayout({ children }) {
                                     : "app-nav__link"
                             }
                         >
-                            Home
+                            {copy.home}
                         </NavLink>
 
                         <NavLink
@@ -53,7 +86,7 @@ export default function MainLayout({ children }) {
                                     : "app-nav__link"
                             }
                         >
-                            History
+                            {copy.history}
                         </NavLink>
 
                         <NavLink
@@ -64,13 +97,24 @@ export default function MainLayout({ children }) {
                                     : "app-nav__link"
                             }
                         >
-                            Map
+                            {copy.map}
+                        </NavLink>
+
+                        <NavLink
+                            to="/settings"
+                            className={({ isActive }) =>
+                                isActive
+                                    ? "app-nav__link app-nav__link--active"
+                                    : "app-nav__link"
+                            }
+                        >
+                            {copy.settings}
                         </NavLink>
                     </nav>
 
                     <div className="app-actions">
                         <div className="app-user">
-                            <span className="app-user__label">Signed in as</span>
+                            <span className="app-user__label">{copy.signedInAs}</span>
                             <span className="app-user__name">{displayName}</span>
                         </div>
 
@@ -79,7 +123,7 @@ export default function MainLayout({ children }) {
                             onClick={handleLogout}
                             type="button"
                         >
-                            Logout
+                            {copy.logout}
                         </button>
                     </div>
                 </div>

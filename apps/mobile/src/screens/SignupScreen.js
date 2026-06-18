@@ -11,7 +11,9 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { signupUser } from "../lib/api";
-import { saveAuth } from "../lib/authStorage";
+import { saveAuthResponse } from "../lib/authStorage";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function SignupScreen({ onSignupSuccess }) {
     const navigation = useNavigation();
@@ -21,8 +23,16 @@ export default function SignupScreen({ onSignupSuccess }) {
     const [loading, setLoading] = useState(false);
 
     async function handleSignup() {
-        if (!username.trim() || !email.trim() || !password.trim()) {
+        const trimmedUsername = username.trim();
+        const trimmedEmail = email.trim().toLowerCase();
+
+        if (!trimmedUsername || !trimmedEmail || !password.trim()) {
             Alert.alert("Error", "Please fill all fields.");
+            return;
+        }
+
+        if (!EMAIL_PATTERN.test(trimmedEmail)) {
+            Alert.alert("Invalid email", "Please enter a valid email address, for example name@example.com.");
             return;
         }
 
@@ -30,22 +40,12 @@ export default function SignupScreen({ onSignupSuccess }) {
             setLoading(true);
 
             const signupData = await signupUser({
-                username: username.trim(),
-                email: email.trim(),
+                username: trimmedUsername,
+                email: trimmedEmail,
                 password,
             });
 
-            const token = signupData.token || signupData.accessToken || signupData.jwt;
-            const user = signupData.user || {
-                username: username.trim(),
-                email: email.trim(),
-            };
-
-            if (!token) {
-                throw new Error("Token not found after signup.");
-            }
-
-            await saveAuth(token, user);
+            await saveAuthResponse(signupData);
             onSignupSuccess?.();
         } catch (e) {
             Alert.alert("Signup failed", e.message || "Unknown error");

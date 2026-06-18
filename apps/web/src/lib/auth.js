@@ -11,6 +11,10 @@ export function setAuth(authResponse) {
     localStorage.setItem(USER_KEY, JSON.stringify(authResponse));
 }
 
+export function updateStoredAuth(authResponse) {
+    setAuth(authResponse);
+}
+
 export function getToken() {
     return localStorage.getItem(TOKEN_KEY);
 }

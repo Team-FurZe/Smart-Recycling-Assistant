@@ -102,7 +102,22 @@ function formatDistance(distance) {
     return `${distance.toFixed(2)} km away`;
 }
 
-export default function MapScreen() {
+function getColors(theme) {
+    const dark = theme === "dark";
+    return {
+        page: dark ? "#0F1722" : "#F8FAFC",
+        card: dark ? "#172235" : "#FFFFFF",
+        nested: dark ? "#121C2D" : "#F8FAFC",
+        border: dark ? "#2A3850" : "#E2E8F0",
+        active: dark ? "#173A24" : "#ECFDF5",
+        activeBorder: "#86EFAC",
+        soft: dark ? "#263244" : "#ECFDF5",
+        text: dark ? "#F8FBFF" : "#0F172A",
+        muted: dark ? "#B9C4D3" : "#64748B",
+    };
+}
+
+export default function MapScreen({ theme = "light" }) {
     const mapRef = useRef(null);
 
     const [selectedLocationId, setSelectedLocationId] = useState(null);
@@ -115,6 +130,7 @@ export default function MapScreen() {
         latitudeDelta: 0.08,
         longitudeDelta: 0.08,
     };
+    const colors = getColors(theme);
 
     const sortedLocations = useMemo(() => {
         if (!userLocation) {
@@ -197,24 +213,24 @@ export default function MapScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <View style={styles.container}>
-                <View style={styles.header}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.page }]}>
+            <View style={[styles.container, { backgroundColor: colors.page }]}>
+                <View style={[styles.header, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View>
                         <Text style={styles.eyebrow}>Recycling Map</Text>
-                        <Text style={styles.title}>Waste Bin Locations</Text>
-                        <Text style={styles.subtitle}>
+                        <Text style={[styles.title, { color: colors.text }]}>Waste Bin Locations</Text>
+                        <Text style={[styles.subtitle, { color: colors.muted }]}>
                             See selected recycling bin points and sort them by your location.
                         </Text>
                     </View>
 
-                    <View style={styles.countBox}>
+                    <View style={[styles.countBox, { backgroundColor: colors.soft, borderColor: colors.activeBorder }]}>
                         <Text style={styles.countNumber}>{binLocations.length}</Text>
-                        <Text style={styles.countLabel}>points</Text>
+                        <Text style={[styles.countLabel, { color: colors.muted }]}>points</Text>
                     </View>
                 </View>
 
-                <View style={styles.mapCard}>
+                <View style={[styles.mapCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <MapView
                         ref={mapRef}
                         provider={PROVIDER_GOOGLE}
@@ -238,24 +254,25 @@ export default function MapScreen() {
                     <Pressable
                         style={({ pressed }) => [
                             styles.myLocationButton,
+                            { backgroundColor: colors.card },
                             pressed && styles.buttonPressed,
                         ]}
                         onPress={handleShowMyLocation}
                         disabled={isRefreshing}
                     >
                         {isRefreshing ? (
-                            <ActivityIndicator size="small" color="#0F172A" />
+                            <ActivityIndicator size="small" color={colors.text} />
                         ) : (
-                            <Text style={styles.myLocationButtonText}>📍 My Location</Text>
+                            <Text style={[styles.myLocationButtonText, { color: colors.text }]}>📍 My Location</Text>
                         )}
                     </Pressable>
                 </View>
 
-                <View style={styles.listCard}>
+                <View style={[styles.listCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={styles.listHeader}>
                         <View>
-                            <Text style={styles.listTitle}>Saved Bin Points</Text>
-                            <Text style={styles.listSubtitle}>
+                            <Text style={[styles.listTitle, { color: colors.text }]}>Saved Bin Points</Text>
+                            <Text style={[styles.listSubtitle, { color: colors.muted }]}>
                                 {userLocation
                                     ? "Sorted by nearest location"
                                     : "Refresh location to sort by distance"}
@@ -289,7 +306,10 @@ export default function MapScreen() {
                                 <Pressable
                                     style={[
                                         styles.locationItem,
-                                        isSelected && styles.locationItemActive,
+                                        {
+                                            backgroundColor: isSelected ? colors.active : colors.nested,
+                                            borderColor: isSelected ? colors.activeBorder : colors.border,
+                                        },
                                     ]}
                                     onPress={() => focusBinLocation(item)}
                                 >
@@ -298,10 +318,10 @@ export default function MapScreen() {
                                     </View>
 
                                     <View style={styles.locationTextArea}>
-                                        <Text style={styles.locationName}>{item.name}</Text>
+                                        <Text style={[styles.locationName, { color: colors.text }]}>{item.name}</Text>
                                         <Text style={styles.locationType}>{item.type}</Text>
-                                        <Text style={styles.locationAddress}>{item.address}</Text>
-                                        <Text style={styles.locationDistance}>
+                                        <Text style={[styles.locationAddress, { color: colors.muted }]}>{item.address}</Text>
+                                        <Text style={[styles.locationDistance, { color: colors.text }]}>
                                             {formatDistance(item.distance)}
                                         </Text>
                                     </View>

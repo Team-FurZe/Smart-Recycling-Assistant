@@ -1,5 +1,37 @@
 # Smart-Recycling-Assistant
 
+# 0) Docker ile Start
+
+```bash
+cd infra/docker
+docker compose up 
+```
+
+Arka planda çalışsın istersen:
+
+```bash
+docker compose up -d
+```
+
+Kod, Dockerfile, `requirements.txt`, `package.json`, `pom.xml` gibi şeyler değiştiyse:
+
+```bash
+docker compose up --build
+```
+
+Kapatmak için:
+```bash
+docker compose down
+```
+ya da Ctrl+C
+
+## NOT
+Mobil kısmı bağımsız çalıştırılıyor. Yeni terminal aç:
+```bash
+cd apps/mobile
+npm run start
+```
+
 # 1) Veritabanı (Docker) — başlat
 
 ```bash

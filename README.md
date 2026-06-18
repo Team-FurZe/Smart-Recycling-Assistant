@@ -7,18 +7,16 @@ cd infra/docker
 docker compose up 
 ```
 
-Arka planda çalışsın istersen:
-
-```bash
-docker compose up -d
-```
-
 Kod, Dockerfile, `requirements.txt`, `package.json`, `pom.xml` gibi şeyler değiştiyse:
 
 ```bash
 docker compose up --build
 ```
+Arka planda çalışsın istersen:
 
+```bash
+docker compose up -d
+```
 Kapatmak için:
 ```bash
 docker compose down
@@ -29,6 +27,7 @@ ya da Ctrl+C
 Mobil kısmı bağımsız çalıştırılıyor. Yeni terminal aç:
 ```bash
 cd apps/mobile
+npm install
 npm run start
 ```
 

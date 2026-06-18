@@ -35,7 +35,7 @@ const copy = {
         menu: "Menu",
         logout: "Logout",
         appName: "Smart Recycle Assistant",
-        signedInAs: "Signed in as",
+        signedInAs: "Sıgned ın as",
     },
     tr: {
         home: "Ana Sayfa",

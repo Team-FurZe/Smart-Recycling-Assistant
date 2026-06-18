@@ -209,7 +209,7 @@ export default function DetectionPanel() {
 
           {result?.noWaste && (
             <div className="sra-alert sra-alert--info">
-              <strong>NO_WASTE</strong> — No detectable waste found in this image.
+              <strong>NO_WASTE</strong> - No detectable waste found in this image.
             </div>
           )}
         </div>

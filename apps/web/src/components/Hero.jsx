@@ -3,8 +3,6 @@ import "../styles/hero.css";
 export default function Hero() {
   return (
     <section className="sra-hero" id="home">
-      <div className="sra-hero__bg" aria-hidden="true" />
-
       <div className="sra-container sra-hero__content">
         <div className="sra-hero__badge">AI + Sustainability</div>
 

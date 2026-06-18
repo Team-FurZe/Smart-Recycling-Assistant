@@ -35,7 +35,7 @@ const binLocations = [
     },
     {
         id: 3,
-        name: "Çengel Cafe Waste Bin",
+        name: "Cengel Cafe Waste Bin",
         type: "Glass",
         address: "Ankara University Area",
         coordinate: {
@@ -45,7 +45,7 @@ const binLocations = [
     },
     {
         id: 4,
-        name: "Dekanlık Waste Bin",
+        name: "Dekanlik Waste Bin",
         type: "Paper",
         address: "Ankara University Area",
         coordinate: {
@@ -55,9 +55,9 @@ const binLocations = [
     },
     {
         id: 5,
-        name: "100.Yıl Waste Bin",
+        name: "100. Yil Waste Bin",
         type: "Metal",
-        address: "100.Yıl",
+        address: "100. Yil",
         coordinate: {
             latitude: 39.896378,
             longitude: 32.797081,
@@ -105,15 +105,15 @@ function formatDistance(distance) {
 function getColors(theme) {
     const dark = theme === "dark";
     return {
-        page: dark ? "#0F1722" : "#F8FAFC",
-        card: dark ? "#172235" : "#FFFFFF",
-        nested: dark ? "#121C2D" : "#F8FAFC",
-        border: dark ? "#2A3850" : "#E2E8F0",
-        active: dark ? "#173A24" : "#ECFDF5",
-        activeBorder: "#86EFAC",
-        soft: dark ? "#263244" : "#ECFDF5",
-        text: dark ? "#F8FBFF" : "#0F172A",
-        muted: dark ? "#B9C4D3" : "#64748B",
+        page: dark ? "#101813" : "#F7F8F6",
+        card: dark ? "#172119" : "#FFFFFF",
+        nested: dark ? "#1E2A21" : "#F2F5F1",
+        border: dark ? "#2D3B30" : "#E1E6DE",
+        active: dark ? "#1F3827" : "#E8F3EC",
+        activeBorder: dark ? "#7FD69A" : "#236B45",
+        soft: dark ? "#1F3827" : "#E8F3EC",
+        text: dark ? "#EDF4EE" : "#17221B",
+        muted: dark ? "#BAC8BD" : "#5F6F64",
     };
 }
 
@@ -245,7 +245,7 @@ export default function MapScreen({ theme = "light" }) {
                                 coordinate={location.coordinate}
                                 title={location.name}
                                 description={`${location.type} - ${location.address}`}
-                                pinColor={selectedLocationId === location.id ? "#15803D" : "#16A34A"}
+                                pinColor={selectedLocationId === location.id ? "#174A31" : "#236B45"}
                                 onPress={() => setSelectedLocationId(location.id)}
                             />
                         ))}
@@ -263,7 +263,7 @@ export default function MapScreen({ theme = "light" }) {
                         {isRefreshing ? (
                             <ActivityIndicator size="small" color={colors.text} />
                         ) : (
-                            <Text style={[styles.myLocationButtonText, { color: colors.text }]}>📍 My Location</Text>
+                            <Text style={[styles.myLocationButtonText, { color: colors.text }]}>My Location</Text>
                         )}
                     </Pressable>
                 </View>
@@ -314,7 +314,7 @@ export default function MapScreen({ theme = "light" }) {
                                     onPress={() => focusBinLocation(item)}
                                 >
                                     <View style={styles.locationIcon}>
-                                        <Text style={styles.locationIconText}>♻</Text>
+                                        <Text style={styles.locationIconText}>R</Text>
                                     </View>
 
                                     <View style={styles.locationTextArea}>
@@ -338,12 +338,12 @@ export default function MapScreen({ theme = "light" }) {
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: "#F8FAFC",
+        backgroundColor: "#F7F8F6",
     },
     container: {
         flex: 1,
         padding: 16,
-        backgroundColor: "#F8FAFC",
+        backgroundColor: "#F7F8F6",
     },
     header: {
         flexDirection: "row",
@@ -351,27 +351,26 @@ const styles = StyleSheet.create({
         gap: 14,
         marginBottom: 14,
         padding: 18,
-        borderRadius: 24,
+        borderRadius: 20,
         backgroundColor: "#FFFFFF",
         borderWidth: 1,
-        borderColor: "#DCFCE7",
+        borderColor: "#E1E6DE",
     },
     eyebrow: {
-        color: "#16A34A",
+        color: "#236B45",
         fontSize: 11,
         fontWeight: "900",
-        letterSpacing: 1.2,
         textTransform: "uppercase",
         marginBottom: 6,
     },
     title: {
-        color: "#0F172A",
+        color: "#17221B",
         fontSize: 22,
         fontWeight: "900",
         marginBottom: 6,
     },
     subtitle: {
-        color: "#64748B",
+        color: "#5F6F64",
         fontSize: 13,
         lineHeight: 19,
         maxWidth: 230,
@@ -379,30 +378,30 @@ const styles = StyleSheet.create({
     countBox: {
         width: 74,
         height: 74,
-        borderRadius: 20,
-        backgroundColor: "#ECFDF5",
+        borderRadius: 16,
+        backgroundColor: "#E8F3EC",
         alignItems: "center",
         justifyContent: "center",
         borderWidth: 1,
-        borderColor: "#BBF7D0",
+        borderColor: "#CBD6C8",
     },
     countNumber: {
-        color: "#16A34A",
+        color: "#236B45",
         fontSize: 26,
         fontWeight: "900",
     },
     countLabel: {
-        color: "#64748B",
+        color: "#5F6F64",
         fontSize: 11,
         fontWeight: "800",
     },
     mapCard: {
         height: 330,
-        borderRadius: 24,
+        borderRadius: 20,
         overflow: "hidden",
         backgroundColor: "#FFFFFF",
         borderWidth: 1,
-        borderColor: "#E2E8F0",
+        borderColor: "#E1E6DE",
         marginBottom: 14,
     },
     map: {
@@ -414,7 +413,7 @@ const styles = StyleSheet.create({
         right: 14,
         minHeight: 42,
         paddingHorizontal: 15,
-        borderRadius: 999,
+        borderRadius: 10,
         backgroundColor: "#FFFFFF",
         alignItems: "center",
         justifyContent: "center",
@@ -424,7 +423,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     myLocationButtonText: {
-        color: "#0F172A",
+        color: "#17221B",
         fontSize: 13,
         fontWeight: "900",
     },
@@ -432,10 +431,10 @@ const styles = StyleSheet.create({
         flex: 1,
         minHeight: 280,
         padding: 14,
-        borderRadius: 24,
+        borderRadius: 20,
         backgroundColor: "#FFFFFF",
         borderWidth: 1,
-        borderColor: "#E2E8F0",
+        borderColor: "#E1E6DE",
     },
     listHeader: {
         flexDirection: "row",
@@ -445,20 +444,20 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     listTitle: {
-        color: "#0F172A",
+        color: "#17221B",
         fontSize: 17,
         fontWeight: "900",
     },
     listSubtitle: {
-        color: "#64748B",
+        color: "#5F6F64",
         fontSize: 12,
         marginTop: 4,
     },
     refreshButton: {
         paddingHorizontal: 14,
         paddingVertical: 10,
-        borderRadius: 14,
-        backgroundColor: "#16A34A",
+        borderRadius: 10,
+        backgroundColor: "#236B45",
     },
     refreshButtonText: {
         color: "#FFFFFF",
@@ -476,10 +475,10 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         gap: 12,
         padding: 12,
-        borderRadius: 18,
-        backgroundColor: "#F8FAFC",
+        borderRadius: 14,
+        backgroundColor: "#F2F5F1",
         borderWidth: 1,
-        borderColor: "#E2E8F0",
+        borderColor: "#E1E6DE",
     },
     locationItemActive: {
         backgroundColor: "#ECFDF5",
@@ -488,37 +487,38 @@ const styles = StyleSheet.create({
     locationIcon: {
         width: 40,
         height: 40,
-        borderRadius: 14,
-        backgroundColor: "#16A34A",
+        borderRadius: 10,
+        backgroundColor: "#236B45",
         alignItems: "center",
         justifyContent: "center",
     },
     locationIconText: {
         color: "#FFFFFF",
-        fontSize: 20,
+        fontSize: 15,
+        fontWeight: "900",
     },
     locationTextArea: {
         flex: 1,
     },
     locationName: {
-        color: "#0F172A",
+        color: "#17221B",
         fontSize: 14,
         fontWeight: "900",
         marginBottom: 3,
     },
     locationType: {
-        color: "#16A34A",
+        color: "#236B45",
         fontSize: 12,
         fontWeight: "800",
         marginBottom: 2,
     },
     locationAddress: {
-        color: "#64748B",
+        color: "#5F6F64",
         fontSize: 12,
         marginBottom: 4,
     },
     locationDistance: {
-        color: "#0F172A",
+        color: "#17221B",
         fontSize: 12,
         fontWeight: "900",
     },

@@ -40,14 +40,14 @@ function filterDetections(result) {
 function getColors(theme) {
     const dark = theme === "dark";
     return {
-        page: dark ? "#0F1722" : "#F5F7FB",
-        card: dark ? "#172235" : "#FFFFFF",
-        nested: dark ? "#121C2D" : "#FAFCFF",
-        border: dark ? "#2A3850" : "#DCE5EF",
-        soft: dark ? "#263244" : "#E9EEF5",
-        image: dark ? "#0F1722" : "#E8EDF4",
-        text: dark ? "#F8FBFF" : "#142033",
-        muted: dark ? "#B9C4D3" : "#607080",
+        page: dark ? "#101813" : "#F7F8F6",
+        card: dark ? "#172119" : "#FFFFFF",
+        nested: dark ? "#1E2A21" : "#F2F5F1",
+        border: dark ? "#2D3B30" : "#E1E6DE",
+        soft: dark ? "#1E2A21" : "#F2F5F1",
+        image: dark ? "#101813" : "#EEF2EA",
+        text: dark ? "#EDF4EE" : "#17221B",
+        muted: dark ? "#BAC8BD" : "#5F6F64",
     };
 }
 
@@ -283,7 +283,7 @@ export default function CameraScreen({ theme = "light" }) {
                                             onPress={() => setActiveTipId(null)}
                                             hitSlop={10}
                                         >
-                                            <Text style={styles.tipCloseText}>×</Text>
+                                            <Text style={styles.tipCloseText}>X</Text>
                                         </Pressable>
                                     </View>
                                     <Text style={styles.tipLabel}>Tips</Text>
@@ -310,22 +310,24 @@ export default function CameraScreen({ theme = "light" }) {
 const styles = StyleSheet.create({
     container: {
         padding: 16,
-        backgroundColor: "#F5F7FB",
+        backgroundColor: "#F7F8F6",
         gap: 14,
     },
     heroCard: {
         backgroundColor: "#fff",
-        borderRadius: 22,
+        borderRadius: 20,
         padding: 20,
+        borderWidth: 1,
+        borderColor: "#E1E6DE",
     },
     title: {
         fontSize: 26,
         fontWeight: "700",
-        color: "#142033",
+        color: "#17221B",
         marginBottom: 6,
     },
     subtitle: {
-        color: "#607080",
+        color: "#5F6F64",
         lineHeight: 20,
     },
     actionRow: {
@@ -334,19 +336,19 @@ const styles = StyleSheet.create({
     },
     secondaryButton: {
         flex: 1,
-        backgroundColor: "#E9EEF5",
+        backgroundColor: "#F2F5F1",
         padding: 14,
-        borderRadius: 14,
+        borderRadius: 10,
         alignItems: "center",
     },
     secondaryButtonText: {
-        color: "#142033",
+        color: "#17221B",
         fontWeight: "700",
     },
     primaryButton: {
-        backgroundColor: "#142033",
+        backgroundColor: "#236B45",
         padding: 15,
-        borderRadius: 14,
+        borderRadius: 10,
         alignItems: "center",
     },
     primaryButtonText: {
@@ -355,15 +357,17 @@ const styles = StyleSheet.create({
     },
     imageCard: {
         backgroundColor: "#fff",
-        borderRadius: 22,
+        borderRadius: 20,
         padding: 14,
+        borderWidth: 1,
+        borderColor: "#E1E6DE",
     },
     imageWrap: {
         position: "relative",
         width: "100%",
         overflow: "hidden",
-        borderRadius: 18,
-        backgroundColor: "#E8EDF4",
+        borderRadius: 14,
+        backgroundColor: "#EEF2EA",
     },
     image: {
         width: "100%",
@@ -388,28 +392,32 @@ const styles = StyleSheet.create({
     },
     loadingCard: {
         backgroundColor: "#fff",
-        borderRadius: 22,
+        borderRadius: 20,
         padding: 24,
+        borderWidth: 1,
+        borderColor: "#E1E6DE",
         alignItems: "center",
     },
     infoCard: {
         backgroundColor: "#fff",
-        borderRadius: 22,
+        borderRadius: 20,
         padding: 18,
         gap: 10,
+        borderWidth: 1,
+        borderColor: "#E1E6DE",
     },
     infoTitle: {
         fontSize: 18,
         fontWeight: "700",
-        color: "#142033",
+        color: "#17221B",
     },
     infoText: {
-        color: "#607080",
+        color: "#5F6F64",
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: "700",
-        color: "#142033",
+        color: "#17221B",
     },
     detectCard: {
         borderWidth: 2,

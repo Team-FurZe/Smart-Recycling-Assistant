@@ -62,7 +62,7 @@ export default function SignupScreen({ onSignupSuccess }) {
             <View style={styles.card}>
                 <View style={styles.brandRow}>
                     <View style={styles.iconBox}>
-                        <Text style={styles.iconText}>♻</Text>
+                        <Text style={styles.iconText}>S</Text>
                     </View>
                     <View style={{ flex: 1 }}>
                         <Text style={styles.eyebrow}>Smart Recycle Assistant</Text>
@@ -114,12 +114,14 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         padding: 20,
-        backgroundColor: "#F5F7FB",
+        backgroundColor: "#F7F8F6",
     },
     card: {
         backgroundColor: "#fff",
-        borderRadius: 24,
+        borderRadius: 20,
         padding: 24,
+        borderWidth: 1,
+        borderColor: "#E1E6DE",
         shadowColor: "#000",
         shadowOpacity: 0.06,
         shadowRadius: 20,
@@ -134,46 +136,45 @@ const styles = StyleSheet.create({
     iconBox: {
         width: 56,
         height: 56,
-        borderRadius: 16,
-        backgroundColor: "#2E7D32",
+        borderRadius: 12,
+        backgroundColor: "#E8F3EC",
         alignItems: "center",
         justifyContent: "center",
     },
     iconText: {
-        color: "#fff",
-        fontSize: 26,
-        fontWeight: "700",
+        color: "#174A31",
+        fontSize: 22,
+        fontWeight: "900",
     },
     eyebrow: {
-        color: "#2E7D32",
-        fontWeight: "700",
+        color: "#236B45",
+        fontWeight: "800",
         fontSize: 12,
         textTransform: "uppercase",
-        letterSpacing: 0.8,
         marginBottom: 4,
     },
     title: {
         fontSize: 28,
         fontWeight: "700",
-        color: "#142033",
+        color: "#17221B",
     },
     subtitle: {
-        color: "#607080",
+        color: "#5F6F64",
         marginTop: 4,
     },
     input: {
         borderWidth: 1,
-        borderColor: "#D9E1EA",
-        borderRadius: 14,
+        borderColor: "#CBD6C8",
+        borderRadius: 10,
         padding: 14,
         marginBottom: 12,
         backgroundColor: "#fff",
     },
     primaryButton: {
         marginTop: 4,
-        backgroundColor: "#142033",
+        backgroundColor: "#236B45",
         padding: 15,
-        borderRadius: 14,
+        borderRadius: 10,
         alignItems: "center",
     },
     primaryButtonText: {
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
     link: {
         textAlign: "center",
         marginTop: 18,
-        color: "#1565C0",
+        color: "#174A31",
         fontWeight: "600",
     },
 });

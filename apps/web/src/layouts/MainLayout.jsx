@@ -59,7 +59,7 @@ export default function MainLayout({ children }) {
                         onClick={() => navigate("/")}
                         type="button"
                     >
-                        <span className="app-brand__icon">♻</span>
+                        <span className="app-brand__icon">S</span>
                         <span>
               <strong>Smart Recycle Assistant</strong>
             </span>

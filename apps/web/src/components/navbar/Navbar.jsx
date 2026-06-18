@@ -11,7 +11,7 @@ export default function Navbar() {
     <header className="navbar">
       <div className="navbar__inner">
         <a className="navbar__brand" href="#home">
-          <span className="navbar__logo" aria-hidden="true">♻️</span>
+          <span className="navbar__logo" aria-hidden="true">S</span>
           <span className="navbar__title">Smart Recycle Assistant</span>
         </a>
 

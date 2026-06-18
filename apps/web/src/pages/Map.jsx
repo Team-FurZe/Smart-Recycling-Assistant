@@ -136,13 +136,13 @@ function MapContent({
                         title={location.name}
                         onClick={() => setSelectedLocation(location)}
                     >
-                        <div className="map-page__marker">♻</div>
+                        <div className="map-page__marker">R</div>
                     </AdvancedMarker>
                 ))}
 
                 {userPosition && (
                     <AdvancedMarker position={userPosition} title="Your Location">
-                        <div className="map-page__user-marker">●</div>
+                        <div className="map-page__user-marker">U</div>
                     </AdvancedMarker>
                 )}
 
@@ -165,7 +165,7 @@ function MapContent({
                 type="button"
                 onClick={handleShowMyLocation}
             >
-                📍 My Location
+                My Location
             </button>
         </div>
     );
@@ -333,7 +333,7 @@ export default function MapPage() {
                                     type="button"
                                     onClick={() => setSelectedLocation(location)}
                                 >
-                                    <span className="map-page__location-icon">♻</span>
+                                    <span className="map-page__location-icon">R</span>
 
                                     <span className="map-page__location-text">
                                         <strong>{location.name}</strong>

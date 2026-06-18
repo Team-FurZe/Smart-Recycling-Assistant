@@ -1,6 +1,8 @@
 ﻿import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
+    Animated,
+    Dimensions,
     Pressable,
     StyleSheet,
     Text,
@@ -18,7 +20,7 @@ import LiveCameraScreen from "../screens/LiveCameraScreen";
 import HistoryScreen from "../screens/HistoryScreen";
 import MapScreen from "../screens/MapScreen";
 import SettingsScreen from "../screens/SettingsScreen";
-import { clearAuth, getToken } from "../lib/authStorage";
+import { clearAuth, getToken, getUser } from "../lib/authStorage";
 import { defaultSettings, readSettings, resolveTheme } from "../lib/preferences";
 
 const Stack = createNativeStackNavigator();
@@ -30,6 +32,10 @@ const copy = {
         history: "History",
         map: "Map",
         settings: "Settings",
+        menu: "Menu",
+        logout: "Logout",
+        appName: "Smart Recycle Assistant",
+        signedInAs: "Signed in as",
     },
     tr: {
         home: "Ana Sayfa",
@@ -37,10 +43,22 @@ const copy = {
         history: "Gecmis",
         map: "Harita",
         settings: "Ayarlar",
+        menu: "Menu",
+        logout: "Cikis",
+        appName: "Smart Recycle Assistant",
+        signedInAs: "Giris yapan",
     },
 };
 
-function MainHeader({ activeTab, language, onChangeTab, onLogout, theme }) {
+const drawerItems = [
+    { key: "home", icon: "photo-camera" },
+    { key: "live", icon: "videocam" },
+    { key: "history", icon: "history" },
+    { key: "map", icon: "map" },
+    { key: "settings", icon: "settings" },
+];
+
+function MainHeader({ activeTab, language, onOpenMenu, theme }) {
     const labels = copy[language] || copy.en;
     const isDark = theme === "dark";
 
@@ -48,134 +66,182 @@ function MainHeader({ activeTab, language, onChangeTab, onLogout, theme }) {
         <SafeAreaView edges={["top"]} style={[styles.safeHeader, isDark && styles.safeHeaderDark]}>
             <View style={[styles.header, isDark && styles.headerDark]}>
                 <View style={styles.headerTopRow}>
-                    <Text style={[styles.headerTitle, isDark && styles.headerTitleDark]}>
-                        Smart Recycle Assistant
-                    </Text>
-
                     <Pressable
-                        onPress={onLogout}
-                        style={[styles.logoutIconButton, isDark && styles.logoutIconButtonDark]}
+                        onPress={onOpenMenu}
+                        style={[styles.menuIconButton, isDark && styles.menuIconButtonDark]}
+                        accessibilityLabel={labels.menu}
                     >
-                        <MaterialIcons name="logout" size={22} color={isDark ? "#F8FBFF" : "#142033"} />
+                        <MaterialIcons name="menu" size={24} color={isDark ? "#F8FBFF" : "#17221B"} />
                     </Pressable>
-                </View>
 
-                <View style={styles.tabRow}>
-                    <Pressable
-                        onPress={() => onChangeTab("home")}
-                        style={[
-                            styles.tabButton,
-                            isDark && styles.tabButtonDark,
-                            activeTab === "home" && styles.tabButtonActive,
-                            isDark && activeTab === "home" && styles.tabButtonActiveDark,
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.tabButtonText,
-                                isDark && styles.tabButtonTextDark,
-                                activeTab === "home" && styles.tabButtonTextActive,
-                            ]}
-                        >
-                            {labels.home}
+                    <View style={styles.headerTitleWrap}>
+                        <Text style={[styles.headerEyebrow, isDark && styles.headerEyebrowDark]}>
+                            {labels.appName}
                         </Text>
-                    </Pressable>
-
-                    <Pressable
-                        onPress={() => onChangeTab("live")}
-                        style={[
-                            styles.tabButton,
-                            isDark && styles.tabButtonDark,
-                            activeTab === "live" && styles.tabButtonActive,
-                            isDark && activeTab === "live" && styles.tabButtonActiveDark,
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.tabButtonText,
-                                isDark && styles.tabButtonTextDark,
-                                activeTab === "live" && styles.tabButtonTextActive,
-                            ]}
-                        >
-                            {labels.live}
+                        <Text style={[styles.headerTitle, isDark && styles.headerTitleDark]}>
+                            {labels[activeTab]}
                         </Text>
-                    </Pressable>
-
-                    <Pressable
-                        onPress={() => onChangeTab("history")}
-                        style={[
-                            styles.tabButton,
-                            isDark && styles.tabButtonDark,
-                            activeTab === "history" && styles.tabButtonActive,
-                            isDark && activeTab === "history" && styles.tabButtonActiveDark,
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.tabButtonText,
-                                isDark && styles.tabButtonTextDark,
-                                activeTab === "history" && styles.tabButtonTextActive,
-                            ]}
-                        >
-                            {labels.history}
-                        </Text>
-                    </Pressable>
-
-                    <Pressable
-                        onPress={() => onChangeTab("map")}
-                        style={[
-                            styles.tabButton,
-                            isDark && styles.tabButtonDark,
-                            activeTab === "map" && styles.tabButtonActive,
-                            isDark && activeTab === "map" && styles.tabButtonActiveDark,
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.tabButtonText,
-                                isDark && styles.tabButtonTextDark,
-                                activeTab === "map" && styles.tabButtonTextActive,
-                            ]}
-                        >
-                            {labels.map}
-                        </Text>
-                    </Pressable>
-
-                    <Pressable
-                        onPress={() => onChangeTab("settings")}
-                        style={[
-                            styles.tabButton,
-                            isDark && styles.tabButtonDark,
-                            activeTab === "settings" && styles.tabButtonActive,
-                            isDark && activeTab === "settings" && styles.tabButtonActiveDark,
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.tabButtonText,
-                                isDark && styles.tabButtonTextDark,
-                                activeTab === "settings" && styles.tabButtonTextActive,
-                            ]}
-                        >
-                            {labels.settings}
-                        </Text>
-                    </Pressable>
+                    </View>
                 </View>
             </View>
         </SafeAreaView>
     );
 }
 
+function DrawerMenu({
+    activeTab,
+    language,
+    onChangeTab,
+    onClose,
+    onLogout,
+    open,
+    progress,
+    theme,
+    user,
+}) {
+    const labels = copy[language] || copy.en;
+    const isDark = theme === "dark";
+    const width = Math.min(310, Dimensions.get("window").width * 0.84);
+    const displayName =
+        user?.username || user?.fullName || user?.name || user?.email || "User";
+    const translateX = progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-width, 0],
+    });
+
+    if (!open) return null;
+
+    return (
+        <View style={styles.drawerLayer} pointerEvents="box-none">
+            <Pressable
+                style={styles.drawerBackdrop}
+                onPress={onClose}
+                accessibilityLabel="Close menu"
+            />
+
+            <Animated.View
+                style={[
+                    styles.drawerPanel,
+                    { width, transform: [{ translateX }] },
+                    isDark && styles.drawerPanelDark,
+                ]}
+            >
+                <SafeAreaView edges={["top", "bottom"]} style={styles.drawerSafe}>
+                    <View style={styles.drawerBrand}>
+                        <View style={[styles.drawerLogo, isDark && styles.drawerLogoDark]}>
+                            <Text style={[styles.drawerLogoText, isDark && styles.drawerLogoTextDark]}>S</Text>
+                        </View>
+                        <View style={styles.drawerBrandText}>
+                            <Text style={[styles.drawerTitle, isDark && styles.drawerTitleDark]}>
+                                Smart Recycle
+                            </Text>
+                            <Text style={[styles.drawerSubtitle, isDark && styles.drawerSubtitleDark]}>
+                                Assistant
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={[styles.drawerUserCard, isDark && styles.drawerUserCardDark]}>
+                        <Text style={[styles.drawerUserLabel, isDark && styles.drawerUserLabelDark]}>
+                            {labels.signedInAs}
+                        </Text>
+                        <Text
+                            numberOfLines={1}
+                            style={[styles.drawerUserName, isDark && styles.drawerUserNameDark]}
+                        >
+                            {displayName}
+                        </Text>
+                    </View>
+
+                    <View style={styles.drawerNav}>
+                        {drawerItems.map((item) => {
+                            const active = activeTab === item.key;
+
+                            return (
+                                <Pressable
+                                    key={item.key}
+                                    onPress={() => {
+                                        onChangeTab(item.key);
+                                        onClose();
+                                    }}
+                                    style={[
+                                        styles.drawerItem,
+                                        isDark && styles.drawerItemDark,
+                                        active && styles.drawerItemActive,
+                                        isDark && active && styles.drawerItemActiveDark,
+                                    ]}
+                                >
+                                    <MaterialIcons
+                                        name={item.icon}
+                                        size={22}
+                                        color={active ? "#236B45" : isDark ? "#BAC8BD" : "#5F6F64"}
+                                    />
+                                    <Text
+                                        style={[
+                                            styles.drawerItemText,
+                                            isDark && styles.drawerItemTextDark,
+                                            active && styles.drawerItemTextActive,
+                                        ]}
+                                    >
+                                        {labels[item.key]}
+                                    </Text>
+                                </Pressable>
+                            );
+                        })}
+                    </View>
+
+                    <Pressable
+                        onPress={onLogout}
+                        style={[styles.drawerLogout, isDark && styles.drawerLogoutDark]}
+                    >
+                        <MaterialIcons name="logout" size={21} color={isDark ? "#EDF4EE" : "#17221B"} />
+                        <Text style={[styles.drawerLogoutText, isDark && styles.drawerLogoutTextDark]}>
+                            {labels.logout}
+                        </Text>
+                    </Pressable>
+                </SafeAreaView>
+            </Animated.View>
+        </View>
+    );
+}
+
 function MainScreen({ onLogout }) {
     const [activeTab, setActiveTab] = useState("home");
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const [settings, setSettings] = useState(defaultSettings);
+    const [user, setUser] = useState(null);
+    const drawerProgress = React.useRef(new Animated.Value(0)).current;
     const theme = resolveTheme(settings.theme);
 
     useEffect(() => {
         readSettings()
             .then(setSettings)
             .catch(() => setSettings(defaultSettings));
+        getUser()
+            .then(setUser)
+            .catch(() => setUser(null));
     }, []);
+
+    function openDrawer() {
+        setDrawerOpen(true);
+        Animated.timing(drawerProgress, {
+            toValue: 1,
+            duration: 220,
+            useNativeDriver: true,
+        }).start();
+    }
+
+    function closeDrawer() {
+        Animated.timing(drawerProgress, {
+            toValue: 0,
+            duration: 180,
+            useNativeDriver: true,
+        }).start(({ finished }) => {
+            if (finished) {
+                setDrawerOpen(false);
+            }
+        });
+    }
 
     function renderActiveScreen() {
         if (activeTab === "home") {
@@ -214,14 +280,25 @@ function MainScreen({ onLogout }) {
             <MainHeader
                 activeTab={activeTab}
                 language={settings.language}
-                onChangeTab={setActiveTab}
-                onLogout={onLogout}
+                onOpenMenu={openDrawer}
                 theme={theme}
             />
 
             <View style={styles.screenContainer}>
                 {renderActiveScreen()}
             </View>
+
+            <DrawerMenu
+                activeTab={activeTab}
+                language={settings.language}
+                onChangeTab={setActiveTab}
+                onClose={closeDrawer}
+                onLogout={onLogout}
+                open={drawerOpen}
+                progress={drawerProgress}
+                theme={theme}
+                user={user}
+            />
         </SafeAreaView>
     );
 }
@@ -286,84 +363,222 @@ const styles = StyleSheet.create({
     },
     mainSafeArea: {
         flex: 1,
-        backgroundColor: "#F5F7FB",
+        backgroundColor: "#F7F8F6",
     },
     mainSafeAreaDark: {
-        backgroundColor: "#0F1722",
+        backgroundColor: "#101813",
     },
     safeHeader: {
         backgroundColor: "#ffffff",
-        borderBottomWidth: 1,
-        borderBottomColor: "#E3E8EF",
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: "#E1E6DE",
     },
     safeHeaderDark: {
-        backgroundColor: "#142033",
-        borderBottomColor: "#263244",
+        backgroundColor: "#172119",
+        borderBottomColor: "#2D3B30",
     },
     header: {
-        paddingHorizontal: 16,
+        paddingHorizontal: 18,
         paddingTop: 8,
-        paddingBottom: 12,
+        paddingBottom: 10,
         backgroundColor: "#ffffff",
     },
     headerDark: {
-        backgroundColor: "#142033",
+        backgroundColor: "#172119",
     },
     headerTopRow: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 12,
+        gap: 12,
+    },
+    headerTitleWrap: {
+        flex: 1,
+    },
+    headerEyebrow: {
+        color: "#7C8B81",
+        fontSize: 11,
+        fontWeight: "800",
+        textTransform: "uppercase",
+    },
+    headerEyebrowDark: {
+        color: "#94A398",
     },
     headerTitle: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: "#142033",
+        fontSize: 22,
+        fontWeight: "800",
+        color: "#17221B",
     },
     headerTitleDark: {
-        color: "#F8FBFF",
+        color: "#EDF4EE",
     },
-    logoutIconButton: {
-        width: 38,
-        height: 38,
+    menuIconButton: {
+        width: 42,
+        height: 42,
+        borderRadius: 10,
+        backgroundColor: "#F2F5F1",
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "#E1E6DE",
+    },
+    menuIconButtonDark: {
+        backgroundColor: "#1E2A21",
+        borderColor: "#2D3B30",
+    },
+    drawerLayer: {
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 50,
+    },
+    drawerBackdrop: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: "rgba(16, 24, 19, 0.42)",
+    },
+    drawerPanel: {
+        height: "100%",
+        backgroundColor: "#FFFFFF",
+        borderTopRightRadius: 18,
+        borderBottomRightRadius: 18,
+        shadowColor: "#000000",
+        shadowOpacity: 0.18,
+        shadowRadius: 24,
+        shadowOffset: { width: 6, height: 0 },
+        elevation: 10,
+    },
+    drawerPanelDark: {
+        backgroundColor: "#172119",
+    },
+    drawerSafe: {
+        flex: 1,
+        padding: 18,
+    },
+    drawerBrand: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#E1E6DE",
+    },
+    drawerLogo: {
+        width: 44,
+        height: 44,
         borderRadius: 12,
-        backgroundColor: "#EEF2F7",
+        backgroundColor: "#E8F3EC",
         alignItems: "center",
         justifyContent: "center",
     },
-    logoutIconButtonDark: {
-        backgroundColor: "#263244",
+    drawerLogoDark: {
+        backgroundColor: "#1F3827",
     },
-    tabRow: {
-        flexDirection: "row",
-        gap: 8,
+    drawerLogoText: {
+        color: "#174A31",
+        fontSize: 19,
+        fontWeight: "900",
     },
-    tabButton: {
+    drawerLogoTextDark: {
+        color: "#9CE6B1",
+    },
+    drawerBrandText: {
         flex: 1,
-        backgroundColor: "#EEF2F7",
-        paddingVertical: 12,
-        borderRadius: 14,
-        alignItems: "center",
     },
-    tabButtonActive: {
-        backgroundColor: "#E8F5E9",
+    drawerTitle: {
+        color: "#17221B",
+        fontSize: 18,
+        fontWeight: "800",
     },
-    tabButtonDark: {
-        backgroundColor: "#263244",
+    drawerTitleDark: {
+        color: "#EDF4EE",
     },
-    tabButtonActiveDark: {
-        backgroundColor: "#173A24",
-    },
-    tabButtonText: {
-        fontSize: 13,
+    drawerSubtitle: {
+        color: "#5F6F64",
         fontWeight: "700",
-        color: "#516072",
     },
-    tabButtonTextDark: {
-        color: "#C7D0DE",
+    drawerSubtitleDark: {
+        color: "#BAC8BD",
     },
-    tabButtonTextActive: {
-        color: "#2E7D32",
+    drawerUserCard: {
+        marginTop: 14,
+        padding: 12,
+        borderRadius: 10,
+        backgroundColor: "#F2F5F1",
+        borderWidth: 1,
+        borderColor: "#E1E6DE",
+    },
+    drawerUserCardDark: {
+        backgroundColor: "#1E2A21",
+        borderColor: "#2D3B30",
+    },
+    drawerUserLabel: {
+        color: "#7C8B81",
+        fontSize: 11,
+        fontWeight: "800",
+        textTransform: "uppercase",
+        marginBottom: 4,
+    },
+    drawerUserLabelDark: {
+        color: "#94A398",
+    },
+    drawerUserName: {
+        color: "#17221B",
+        fontSize: 15,
+        fontWeight: "800",
+    },
+    drawerUserNameDark: {
+        color: "#EDF4EE",
+    },
+    drawerNav: {
+        gap: 8,
+        paddingTop: 18,
+    },
+    drawerItem: {
+        minHeight: 48,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        backgroundColor: "transparent",
+    },
+    drawerItemDark: {
+        backgroundColor: "transparent",
+    },
+    drawerItemActive: {
+        backgroundColor: "#E8F3EC",
+    },
+    drawerItemActiveDark: {
+        backgroundColor: "#1F3827",
+    },
+    drawerItemText: {
+        color: "#17221B",
+        fontSize: 15,
+        fontWeight: "800",
+    },
+    drawerItemTextDark: {
+        color: "#EDF4EE",
+    },
+    drawerItemTextActive: {
+        color: "#236B45",
+    },
+    drawerLogout: {
+        minHeight: 48,
+        marginTop: "auto",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: "#CBD6C8",
+    },
+    drawerLogoutDark: {
+        borderColor: "#415144",
+    },
+    drawerLogoutText: {
+        color: "#17221B",
+        fontWeight: "800",
+    },
+    drawerLogoutTextDark: {
+        color: "#EDF4EE",
     },
     screenContainer: {
         flex: 1,

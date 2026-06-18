@@ -8,7 +8,7 @@ export default function DetectionsList({ detections, retryStateById, onTryAgain 
   }, [detections]);
 
   return (
-    <div style={{ width: "100%", maxWidth: 720 }}>
+    <div className="sra-detection-list">
       {sorted.map((det) => {
         const retryState = retryStateById?.[det.id] || { loading: false, message: "" };
         const classTip = getClassTip(det.label);
@@ -17,13 +17,11 @@ export default function DetectionsList({ detections, retryStateById, onTryAgain 
           <div
             className="sra-detection-item"
             key={det.id}
-            style={{
-              border: `2px solid ${det.binColor}`,
-            }}
+            style={{ "--detection-color": det.binColor }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+            <div className="sra-detection-item__top">
               <div>
-                <div style={{ fontWeight: 800 }}>
+                <div className="sra-detection-title">
                   #{det.id}{" "}
                   <span aria-hidden="true">-</span>{" "}
                   <span className="sra-detection-tip-trigger" tabIndex={0} style={{ "--tip-color": det.binColor }}>
@@ -48,17 +46,10 @@ export default function DetectionsList({ detections, retryStateById, onTryAgain 
               </div>
 
               <button
+                className="sra-detection-retry"
                 type="button"
                 onClick={() => onTryAgain(det)}
                 disabled={retryState.loading}
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  border: `1px solid ${det.binColor}`,
-                  background: "transparent",
-                  cursor: retryState.loading ? "not-allowed" : "pointer",
-                  fontWeight: 800,
-                }}
               >
                 {retryState.loading ? "Trying..." : "Try again"}
               </button>

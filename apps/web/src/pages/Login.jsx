@@ -40,7 +40,7 @@ export default function Login() {
         <div className="auth-page">
             <div className="auth-page__card">
                 <div className="auth-page__brand">
-                    <div className="auth-page__icon">♻</div>
+                    <div className="auth-page__icon">S</div>
                     <div>
                         <p className="auth-page__eyebrow">Smart Recycle Assistant</p>
                         <h1 className="auth-page__title">Login</h1>

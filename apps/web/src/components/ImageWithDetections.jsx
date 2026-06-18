@@ -16,13 +16,13 @@ export default function ImageWithDetections({ imageUrl, detections, imageWidth, 
   }
 
   return (
-    <div style={{ position: "relative", width: "100%", maxWidth: 720 }}>
+    <div className="sra-image-detection">
       <img
         ref={imgRef}
         src={imageUrl}
         alt="Selected preview"
         onLoad={handleImageLoad}
-        style={{ width: "100%", height: "auto", display: "block", borderRadius: 8, border: "1px solid #ddd" }}
+        className="sra-image-detection__image"
       />
 
       {Array.isArray(detections) &&
@@ -44,7 +44,7 @@ export default function ImageWithDetections({ imageUrl, detections, imageWidth, 
                 width: w,
                 height: h,
                 border: `3px solid ${det.binColor}`,
-                borderRadius: 10,
+                borderRadius: 8,
                 boxSizing: "border-box",
                 pointerEvents: "none",
               }}
@@ -55,7 +55,7 @@ export default function ImageWithDetections({ imageUrl, detections, imageWidth, 
                   left: 6,
                   top: 6,
                   padding: "2px 6px",
-                  borderRadius: 8,
+                  borderRadius: 7,
                   background: det.binColor,
                   color: "#111",
                   fontWeight: 800,

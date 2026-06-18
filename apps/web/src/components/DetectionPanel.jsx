@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { predictImage } from "../lib/api";
+import { disconnectArduino, getArduinoCommandForLabel, sendArduinoSortCommand } from "../lib/arduinoSerial";
 import ImageWithDetections from "./ImageWithDetections";
 import DetectionsList from "./DetectionsList";
 import "../styles/panel.css";
@@ -51,12 +52,19 @@ export default function DetectionPanel() {
   const [overrides, setOverrides] = useState({});
   const [triedById, setTriedById] = useState({});
   const [retryStateById, setRetryStateById] = useState({});
+  const [sortStateById, setSortStateById] = useState({});
 
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
+
+  useEffect(() => {
+    return () => {
+      disconnectArduino().catch(() => {});
+    };
+  }, []);
 
   const viewDetections = useMemo(() => {
     if (!result?.detections) return [];
@@ -72,6 +80,7 @@ export default function DetectionPanel() {
     setOverrides({});
     setTriedById({});
     setRetryStateById({});
+    setSortStateById({});
     setPreviewUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
@@ -86,6 +95,7 @@ export default function DetectionPanel() {
     setOverrides({});
     setTriedById({});
     setRetryStateById({});
+    setSortStateById({});
 
     if (selected) {
       setPreviewUrl((prev) => {
@@ -114,6 +124,7 @@ export default function DetectionPanel() {
         setOverrides({});
         setTriedById({});
         setRetryStateById({});
+        setSortStateById({});
     } catch (err) {
       alert(err?.message || "YOLO Predict error");
     } finally {
@@ -180,6 +191,31 @@ export default function DetectionPanel() {
     }
   }
 
+  async function onSortWaste(det) {
+    if (!getArduinoCommandForLabel(det.label)) {
+      setSortStateById((prev) => ({
+        ...prev,
+        [det.id]: { loading: false, message: "Arduino: this class is not mapped to a bin." },
+      }));
+      return;
+    }
+
+    setSortStateById((prev) => ({ ...prev, [det.id]: { loading: true, message: "" } }));
+
+    try {
+      await sendArduinoSortCommand(det.label);
+      setSortStateById((prev) => ({
+        ...prev,
+        [det.id]: { loading: false, message: "Detection is sent to Smart Recycling Bin." },
+      }));
+    } catch (err) {
+      setSortStateById((prev) => ({
+        ...prev,
+        [det.id]: { loading: false, message: `Arduino: ${err?.message || err}` },
+      }));
+    }
+  }
+
   return (
     <div className="sra-panel">
       <div className="sra-panel__top">
@@ -239,7 +275,13 @@ export default function DetectionPanel() {
             <span className="sra-badge">{viewDetections.length}</span>
           </div>
 
-          <DetectionsList detections={viewDetections} retryStateById={retryStateById} onTryAgain={onTryAgain} />
+          <DetectionsList
+            detections={viewDetections}
+            retryStateById={retryStateById}
+            sortStateById={sortStateById}
+            onSortWaste={onSortWaste}
+            onTryAgain={onTryAgain}
+          />
         </div>
       )}
     </div>

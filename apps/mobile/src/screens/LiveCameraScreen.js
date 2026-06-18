@@ -11,7 +11,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
 import { predictLiveImageFromUri } from "../lib/api";
-import { getToken } from "../lib/authStorage";
+import { clearAuth, getToken } from "../lib/authStorage";
 
 const LIVE_FRAME_INTERVAL_MS = 450;
 const LIVE_IMAGE_WIDTH = 512;
@@ -85,7 +85,7 @@ function DetectionBoxes({ detections, imageWidth, imageHeight, layout }) {
     });
 }
 
-export default function LiveCameraScreen({ theme = "light" }) {
+export default function LiveCameraScreen({ theme = "light", onAuthExpired }) {
     const cameraRef = useRef(null);
     const timerRef = useRef(null);
     const abortRef = useRef(null);
@@ -169,6 +169,14 @@ export default function LiveCameraScreen({ theme = "light" }) {
             }
         } catch (e) {
             if (e.name !== "AbortError" && liveModeRef.current) {
+                if (e.status === 401 || e.status === 403) {
+                    await clearAuth();
+                    stopLiveMode();
+                    Alert.alert("Session expired", "Please log in again.");
+                    onAuthExpired?.();
+                    return;
+                }
+
                 setLiveError(e.message ?? "Live detection failed.");
             }
         } finally {
@@ -186,7 +194,7 @@ export default function LiveCameraScreen({ theme = "light" }) {
                 }
             }
         }
-    }, [optimizeFrame]);
+    }, [onAuthExpired, optimizeFrame, stopLiveMode]);
 
     useEffect(() => {
         if (!liveMode) return undefined;

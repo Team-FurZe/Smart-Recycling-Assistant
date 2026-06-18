@@ -12,7 +12,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { predictImageFromUri } from "../lib/api";
-import { getToken } from "../lib/authStorage";
+import { clearAuth, getToken } from "../lib/authStorage";
 import { getClassTip } from "../lib/recyclingTips";
 
 const STILL_IMAGE_WIDTH = 1024;
@@ -89,7 +89,7 @@ function DetectionBoxes({ detections, imageWidth, imageHeight, layout }) {
     });
 }
 
-export default function CameraScreen({ theme = "light" }) {
+export default function CameraScreen({ theme = "light", onAuthExpired }) {
     const [sourceUri, setSourceUri] = useState(null);
     const [predictUri, setPredictUri] = useState(null);
     const [result, setResult] = useState(null);
@@ -166,6 +166,13 @@ export default function CameraScreen({ theme = "light" }) {
             setResult(data);
             setActiveTipId(null);
         } catch (e) {
+            if (e.status === 401 || e.status === 403) {
+                await clearAuth();
+                Alert.alert("Session expired", "Please log in again.");
+                onAuthExpired?.();
+                return;
+            }
+
             Alert.alert("Prediction error", e.message ?? "Unknown error");
         } finally {
             setLoading(false);

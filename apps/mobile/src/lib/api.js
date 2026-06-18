@@ -21,7 +21,18 @@ async function parseJsonResponse(res) {
             errorBody = null;
         }
 
-        throw new Error(errorBody?.message || errorBody?.error || text || `HTTP ${res.status}`);
+        const message =
+            errorBody?.message ||
+            errorBody?.error ||
+            text ||
+            `HTTP ${res.status}`;
+        const error = new Error(
+            res.status === 401 || res.status === 403
+                ? "Session expired. Please log in again."
+                : message
+        );
+        error.status = res.status;
+        throw error;
     }
 
     if (!text) {
@@ -154,10 +165,6 @@ export async function clearMyHistory(token) {
 }
 
 export async function predictLiveImageFromUri(uri, token, options = {}) {
-    if (!token) {
-        throw new Error("Session expired. Please log in again.");
-    }
-
     const formData = new FormData();
     formData.append("file", {
         uri,
@@ -165,11 +172,14 @@ export async function predictLiveImageFromUri(uri, token, options = {}) {
         type: "image/jpeg",
     });
 
+    const headers = {};
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
     const res = await fetch(PREDICT_LIVE_URL, {
         method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: formData,
         signal: options.signal,
     });

@@ -245,7 +245,7 @@ function MainScreen({ onLogout }) {
 
     function renderActiveScreen() {
         if (activeTab === "home") {
-            return <CameraScreen theme={theme} />;
+            return <CameraScreen theme={theme} onAuthExpired={onLogout} />;
         }
 
         if (activeTab === "history") {
@@ -253,7 +253,7 @@ function MainScreen({ onLogout }) {
         }
 
         if (activeTab === "live") {
-            return <LiveCameraScreen theme={theme} />;
+            return <LiveCameraScreen theme={theme} onAuthExpired={onLogout} />;
         }
 
         if (activeTab === "map") {
@@ -269,7 +269,7 @@ function MainScreen({ onLogout }) {
             );
         }
 
-        return <CameraScreen theme={theme} />;
+        return <CameraScreen theme={theme} onAuthExpired={onLogout} />;
     }
 
     return (

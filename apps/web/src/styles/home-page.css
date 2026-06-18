@@ -38,16 +38,11 @@
     font-size: 1rem;
 }
 
-.home-page__hero,
 .home-page__panel {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-surface);
     box-shadow: var(--shadow-sm);
-}
-
-.home-page__hero {
-    overflow: hidden;
 }
 
 .home-page__panel {

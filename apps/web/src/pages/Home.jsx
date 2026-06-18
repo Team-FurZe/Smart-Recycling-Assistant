@@ -1,5 +1,4 @@
 import MainLayout from "../layouts/MainLayout.jsx";
-import Hero from "../components/Hero.jsx";
 import DetectionPanel from "../components/DetectionPanel.jsx";
 import { getStoredUser } from "../lib/auth";
 import "../styles/home-page.css";
@@ -22,10 +21,6 @@ export default function Home() {
                             in a clean and simple interface.
                         </p>
                     </div>
-                </div>
-
-                <div className="home-page__hero">
-                    <Hero />
                 </div>
 
                 <div className="home-page__panel" id="demo">

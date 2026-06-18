@@ -14,6 +14,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import LoginScreen from "../screens/LoginScreen";
 import SignupScreen from "../screens/SignupScreen";
 import CameraScreen from "../screens/CameraScreen";
+import LiveCameraScreen from "../screens/LiveCameraScreen";
 import HistoryScreen from "../screens/HistoryScreen";
 import MapScreen from "../screens/MapScreen";
 import { clearAuth, getToken } from "../lib/authStorage";
@@ -47,6 +48,23 @@ function MainHeader({ activeTab, onChangeTab, onLogout }) {
                             ]}
                         >
                             Home
+                        </Text>
+                    </Pressable>
+
+                    <Pressable
+                        onPress={() => onChangeTab("live")}
+                        style={[
+                            styles.tabButton,
+                            activeTab === "live" && styles.tabButtonActive,
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.tabButtonText,
+                                activeTab === "live" && styles.tabButtonTextActive,
+                            ]}
+                        >
+                            Live
                         </Text>
                     </Pressable>
 
@@ -99,6 +117,10 @@ function MainScreen({ onLogout }) {
 
         if (activeTab === "history") {
             return <HistoryScreen />;
+        }
+
+        if (activeTab === "live") {
+            return <LiveCameraScreen />;
         }
 
         if (activeTab === "map") {

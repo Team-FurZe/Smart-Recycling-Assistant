@@ -39,4 +39,8 @@ public class PredictionService {
 
         return predictionResponse;
     }
+
+    public PredictionResponse predictOnly(MultipartFile file) {
+        return aiClientService.predict(file);
+    }
 }

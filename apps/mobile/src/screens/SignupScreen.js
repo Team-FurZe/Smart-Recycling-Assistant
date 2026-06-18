@@ -10,7 +10,7 @@ import {
     Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { signupUser, loginUser } from "../lib/api";
+import { signupUser } from "../lib/api";
 import { saveAuth } from "../lib/authStorage";
 
 export default function SignupScreen({ onSignupSuccess }) {
@@ -29,19 +29,14 @@ export default function SignupScreen({ onSignupSuccess }) {
         try {
             setLoading(true);
 
-            await signupUser({
+            const signupData = await signupUser({
                 username: username.trim(),
                 email: email.trim(),
                 password,
             });
 
-            const loginData = await loginUser({
-                email: email.trim(),
-                password,
-            });
-
-            const token = loginData.token || loginData.accessToken || loginData.jwt;
-            const user = loginData.user || {
+            const token = signupData.token || signupData.accessToken || signupData.jwt;
+            const user = signupData.user || {
                 username: username.trim(),
                 email: email.trim(),
             };

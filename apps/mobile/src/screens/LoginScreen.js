@@ -47,18 +47,6 @@ export default function LoginScreen({ onLoginSuccess }) {
         } finally {
             setLoading(false);
         }
-
-        console.log("HANDLE LOGIN START");
-
-        const data = await loginUser({
-            email: email.trim(),
-            password,
-        });
-
-        console.log("LOGIN DATA", data);
-
-        const token = data.token || data.accessToken || data.jwt;
-        console.log("TOKEN FOUND", token);
     }
 
     return (

@@ -27,6 +27,15 @@ public class PredictController {
         return predictionService.predictAndSave(file, authentication.getName());
     }
 
+    @PostMapping(
+            value = "/predict/live",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public PredictionResponse predictLive(@RequestPart("file") MultipartFile file) {
+        return predictionService.predictOnly(file);
+    }
+
     @GetMapping("/health")
     public String health() {
         return "{\"status\":\"ok\"}";

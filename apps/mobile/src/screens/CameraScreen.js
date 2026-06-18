@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
     View,
     Text,
@@ -9,14 +9,11 @@ import {
     Image,
     Pressable,
 } from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { predictImageFromUri } from "../lib/api";
 import { getToken } from "../lib/authStorage";
 
-const LIVE_FRAME_INTERVAL_MS = 900;
-const LIVE_IMAGE_WIDTH = 640;
 const STILL_IMAGE_WIDTH = 1024;
 const MIN_CONFIDENCE = 0.5;
 
@@ -39,7 +36,7 @@ function filterDetections(result) {
     );
 }
 
-function DetectionBoxes({ detections, imageWidth, imageHeight, layout, badgeCompact }) {
+function DetectionBoxes({ detections, imageWidth, imageHeight, layout }) {
     const scale = useMemo(() => {
         return {
             sx: layout.w / (imageWidth || 1),
@@ -51,10 +48,6 @@ function DetectionBoxes({ detections, imageWidth, imageHeight, layout, badgeComp
         if (!det.bbox) return null;
 
         const { x, y, width, height } = det.bbox;
-        const left = x * scale.sx;
-        const top = y * scale.sy;
-        const w = width * scale.sx;
-        const h = height * scale.sy;
         const color = getBinColor(det.label, det.binColor);
 
         return (
@@ -63,16 +56,16 @@ function DetectionBoxes({ detections, imageWidth, imageHeight, layout, badgeComp
                 style={[
                     styles.box,
                     {
-                        left,
-                        top,
-                        width: w,
-                        height: h,
+                        left: x * scale.sx,
+                        top: y * scale.sy,
+                        width: width * scale.sx,
+                        height: height * scale.sy,
                         borderColor: color,
                     },
                 ]}
             >
                 <View style={[styles.badge, { backgroundColor: color }]}>
-                    <Text style={[styles.badgeText, badgeCompact && styles.badgeTextCompact]}>
+                    <Text style={styles.badgeText}>
                         {det.label} {Math.round((det.confidence || 0) * 100)}%
                     </Text>
                 </View>
@@ -82,150 +75,24 @@ function DetectionBoxes({ detections, imageWidth, imageHeight, layout, badgeComp
 }
 
 export default function CameraScreen() {
-    const cameraRef = useRef(null);
-    const liveTimerRef = useRef(null);
-    const liveAbortRef = useRef(null);
-    const liveInFlightRef = useRef(false);
-    const liveModeRef = useRef(false);
-
-    const [cameraPermission, requestCameraPermission] = useCameraPermissions();
     const [sourceUri, setSourceUri] = useState(null);
     const [predictUri, setPredictUri] = useState(null);
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [layout, setLayout] = useState({ w: 1, h: 1 });
-    const [liveLayout, setLiveLayout] = useState({ w: 1, h: 1 });
-    const [liveMode, setLiveMode] = useState(false);
-    const [liveResult, setLiveResult] = useState(null);
-    const [liveBusy, setLiveBusy] = useState(false);
-    const [liveError, setLiveError] = useState(null);
 
-    useEffect(() => {
-        liveModeRef.current = liveMode;
-    }, [liveMode]);
-
-    const optimizeImage = useCallback(async (uri, width = STILL_IMAGE_WIDTH) => {
+    const optimizeImage = useCallback(async (uri) => {
         try {
             const manipulated = await ImageManipulator.manipulateAsync(
                 uri,
-                [{ resize: { width } }],
-                { compress: 0.65, format: ImageManipulator.SaveFormat.JPEG }
+                [{ resize: { width: STILL_IMAGE_WIDTH } }],
+                { compress: 0.75, format: ImageManipulator.SaveFormat.JPEG }
             );
             return manipulated.uri;
         } catch {
             return uri;
         }
     }, []);
-
-    const stopLiveMode = useCallback(() => {
-        setLiveMode(false);
-        setLiveBusy(false);
-
-        if (liveTimerRef.current) {
-            clearTimeout(liveTimerRef.current);
-            liveTimerRef.current = null;
-        }
-
-        if (liveAbortRef.current) {
-            liveAbortRef.current.abort();
-            liveAbortRef.current = null;
-        }
-
-        liveInFlightRef.current = false;
-    }, []);
-
-    const captureAndPredictFrame = useCallback(async () => {
-        if (!liveModeRef.current || liveInFlightRef.current || !cameraRef.current) {
-            return;
-        }
-
-        liveInFlightRef.current = true;
-        setLiveBusy(true);
-
-        const controller = new AbortController();
-        liveAbortRef.current = controller;
-
-        try {
-            const photo = await cameraRef.current.takePictureAsync({
-                quality: 0.45,
-                base64: false,
-                skipProcessing: true,
-            });
-            const optimizedUri = await optimizeImage(photo.uri, LIVE_IMAGE_WIDTH);
-            const token = await getToken();
-            const data = await predictImageFromUri(optimizedUri, token, {
-                signal: controller.signal,
-            });
-
-            if (liveModeRef.current && !controller.signal.aborted) {
-                setLiveResult(data);
-                setLiveError(null);
-            }
-        } catch (e) {
-            if (e.name !== "AbortError" && liveModeRef.current) {
-                setLiveError(e.message ?? "Live detection failed.");
-            }
-        } finally {
-            if (liveAbortRef.current === controller) {
-                liveAbortRef.current = null;
-            }
-
-            liveInFlightRef.current = false;
-            setLiveBusy(false);
-        }
-    }, [optimizeImage]);
-
-    useEffect(() => {
-        if (!liveMode) return undefined;
-
-        function tick() {
-            captureAndPredictFrame().finally(() => {
-                if (liveModeRef.current) {
-                    liveTimerRef.current = setTimeout(tick, LIVE_FRAME_INTERVAL_MS);
-                }
-            });
-        }
-
-        tick();
-
-        return () => {
-            if (liveTimerRef.current) {
-                clearTimeout(liveTimerRef.current);
-                liveTimerRef.current = null;
-            }
-        };
-    }, [captureAndPredictFrame, liveMode]);
-
-    useEffect(() => {
-        return stopLiveMode;
-    }, [stopLiveMode]);
-
-    async function ensureCameraPermission() {
-        const permission = cameraPermission?.granted
-            ? cameraPermission
-            : await requestCameraPermission();
-
-        if (!permission?.granted) {
-            Alert.alert("Permission", "Please allow camera permission.");
-            return false;
-        }
-
-        return true;
-    }
-
-    async function toggleLiveMode() {
-        if (liveMode) {
-            stopLiveMode();
-            return;
-        }
-
-        const ok = await ensureCameraPermission();
-        if (!ok) return;
-
-        setLiveResult(null);
-        setLiveError(null);
-        setLiveMode(true);
-    }
 
     async function pickFromGallery() {
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -240,18 +107,18 @@ export default function CameraScreen() {
         });
 
         if (!r.canceled) {
-            const uri = r.assets[0].uri;
-            setSourceUri(uri);
+            setSourceUri(r.assets[0].uri);
             setPredictUri(null);
             setResult(null);
         }
     }
 
     async function takePhoto() {
-        stopLiveMode();
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
 
-        const ok = await ensureCameraPermission();
-        if (!ok) return;
+        if (perm.status !== "granted") {
+            return Alert.alert("Permission", "Please allow camera permission.");
+        }
 
         const r = await ImagePicker.launchCameraAsync({
             quality: 1,
@@ -259,8 +126,7 @@ export default function CameraScreen() {
         });
 
         if (!r.canceled) {
-            const uri = r.assets[0].uri;
-            setSourceUri(uri);
+            setSourceUri(r.assets[0].uri);
             setPredictUri(null);
             setResult(null);
         }
@@ -274,7 +140,7 @@ export default function CameraScreen() {
         try {
             setLoading(true);
 
-            const optimizedUri = await optimizeImage(sourceUri, STILL_IMAGE_WIDTH);
+            const optimizedUri = await optimizeImage(sourceUri);
             setPredictUri(optimizedUri);
 
             const token = await getToken();
@@ -288,11 +154,8 @@ export default function CameraScreen() {
     }
 
     const detections = useMemo(() => filterDetections(result), [result]);
-    const liveDetections = useMemo(() => filterDetections(liveResult), [liveResult]);
     const imageW = result?.imageWidth || 1;
     const imageH = result?.imageHeight || 1;
-    const liveImageW = liveResult?.imageWidth || liveLayout.w || 1;
-    const liveImageH = liveResult?.imageHeight || liveLayout.h || 1;
     const shownUri = predictUri || sourceUri;
 
     return (
@@ -300,64 +163,8 @@ export default function CameraScreen() {
             <View style={styles.heroCard}>
                 <Text style={styles.title}>Detect recyclable waste</Text>
                 <Text style={styles.subtitle}>
-                    Use live detection, take a photo, or select one from the gallery.
+                    Take a photo or select one from the gallery, then review labels and boxes.
                 </Text>
-            </View>
-
-            <View style={styles.liveCard}>
-                <View
-                    style={styles.liveCameraWrap}
-                    onLayout={(e) => {
-                        const { width, height } = e.nativeEvent.layout;
-                        setLiveLayout({ w: width, h: height });
-                    }}
-                >
-                    {cameraPermission?.granted ? (
-                        <CameraView
-                            ref={cameraRef}
-                            style={styles.liveCamera}
-                            facing="back"
-                            animateShutter={false}
-                        />
-                    ) : (
-                        <View style={styles.cameraPermissionPane}>
-                            <Text style={styles.cameraPermissionText}>
-                                Camera permission is needed for live detection.
-                            </Text>
-                        </View>
-                    )}
-
-                    <DetectionBoxes
-                        detections={liveDetections}
-                        imageWidth={liveImageW}
-                        imageHeight={liveImageH}
-                        layout={liveLayout}
-                        badgeCompact
-                    />
-
-                    <View style={styles.liveStatusPill}>
-                        <View
-                            style={[
-                                styles.liveStatusDot,
-                                liveMode && styles.liveStatusDotActive,
-                            ]}
-                        />
-                        <Text style={styles.liveStatusText}>
-                            {liveBusy ? "Analyzing" : liveMode ? "Live" : "Paused"}
-                        </Text>
-                    </View>
-                </View>
-
-                {liveError && <Text style={styles.liveError}>{liveError}</Text>}
-
-                <Pressable
-                    style={[styles.primaryButton, liveMode && styles.stopButton]}
-                    onPress={toggleLiveMode}
-                >
-                    <Text style={styles.primaryButtonText}>
-                        {liveMode ? "Stop Live Mode" : "Start Live Mode"}
-                    </Text>
-                </Pressable>
             </View>
 
             <View style={styles.actionRow}>
@@ -382,9 +189,7 @@ export default function CameraScreen() {
                         style={styles.imageWrap}
                         onLayout={(e) => {
                             const { width } = e.nativeEvent.layout;
-                            const ratio = imageW / imageH;
-                            const height = width / ratio;
-                            setLayout({ w: width, h: height });
+                            setLayout({ w: width, h: width / (imageW / imageH) });
                         }}
                     >
                         <Image
@@ -461,64 +266,6 @@ const styles = StyleSheet.create({
         color: "#607080",
         lineHeight: 20,
     },
-    liveCard: {
-        backgroundColor: "#fff",
-        borderRadius: 22,
-        padding: 14,
-        gap: 12,
-    },
-    liveCameraWrap: {
-        position: "relative",
-        width: "100%",
-        aspectRatio: 3 / 4,
-        overflow: "hidden",
-        borderRadius: 18,
-        backgroundColor: "#142033",
-    },
-    liveCamera: {
-        ...StyleSheet.absoluteFillObject,
-    },
-    cameraPermissionPane: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 22,
-    },
-    cameraPermissionText: {
-        color: "#fff",
-        textAlign: "center",
-        lineHeight: 20,
-    },
-    liveStatusPill: {
-        position: "absolute",
-        top: 10,
-        right: 10,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 7,
-        backgroundColor: "rgba(20, 32, 51, 0.78)",
-        borderRadius: 999,
-        paddingHorizontal: 10,
-        paddingVertical: 7,
-    },
-    liveStatusDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: "#A7B1BE",
-    },
-    liveStatusDotActive: {
-        backgroundColor: "#4CAF50",
-    },
-    liveStatusText: {
-        color: "#fff",
-        fontWeight: "700",
-        fontSize: 12,
-    },
-    liveError: {
-        color: "#C62828",
-        fontWeight: "600",
-    },
     actionRow: {
         flexDirection: "row",
         gap: 10,
@@ -539,9 +286,6 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 14,
         alignItems: "center",
-    },
-    stopButton: {
-        backgroundColor: "#B3261E",
     },
     primaryButtonText: {
         color: "#fff",
@@ -579,9 +323,6 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontWeight: "700",
         fontSize: 12,
-    },
-    badgeTextCompact: {
-        fontSize: 11,
     },
     loadingCard: {
         backgroundColor: "#fff",

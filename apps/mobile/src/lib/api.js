@@ -56,7 +56,27 @@ export async function getMyHistory(token) {
     return parseJsonResponse(res);
 }
 
-export async function predictImageFromUri(uri, token) {
+export async function predictImageFromUri(uri, token, options = {}) {
+    if (options.signal) {
+        const formData = new FormData();
+        formData.append("file", {
+            uri,
+            name: "frame.jpg",
+            type: "image/jpeg",
+        });
+
+        const res = await fetch(PREDICT_URL, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+            signal: options.signal,
+        });
+
+        return parseJsonResponse(res);
+    }
+
     const res = await FileSystem.uploadAsync(PREDICT_URL, uri, {
         httpMethod: "POST",
         uploadType: FileSystem.FileSystemUploadType.MULTIPART,

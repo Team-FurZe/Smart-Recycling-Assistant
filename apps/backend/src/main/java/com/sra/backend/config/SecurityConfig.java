@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/predict/live").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/predict").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/smart-bin/sort").authenticated()
                         .requestMatchers("/api/v1/account/**").authenticated()
                         .requestMatchers("/api/v1/history/**").authenticated()
                         .anyRequest().permitAll()

@@ -75,6 +75,13 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!-- Serial communication for Smart Recycling Bin -->
+        <dependency>
+            <groupId>com.fazecast</groupId>
+            <artifactId>jSerialComm</artifactId>
+            <version>2.11.4</version>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

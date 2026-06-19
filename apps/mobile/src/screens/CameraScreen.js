@@ -9,9 +9,10 @@ import {
     Image,
     Pressable,
 } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
-import { predictImageFromUri } from "../lib/api";
+import { predictImageFromUri, sendDetectionToSmartBin } from "../lib/api";
 import { clearAuth, getToken } from "../lib/authStorage";
 import { getClassTip } from "../lib/recyclingTips";
 
@@ -29,6 +30,10 @@ const BIN_COLORS = {
 
 function getBinColor(label, fallback) {
     return BIN_COLORS[label] || fallback || "#4CAF50";
+}
+
+function canSendToSmartBin(label) {
+    return ["PLASTIC", "PAPER", "GLASS", "METAL"].includes(String(label || "").trim().toUpperCase());
 }
 
 function filterDetections(result) {
@@ -96,6 +101,7 @@ export default function CameraScreen({ theme = "light", onAuthExpired }) {
     const [loading, setLoading] = useState(false);
     const [layout, setLayout] = useState({ w: 1, h: 1 });
     const [activeTipId, setActiveTipId] = useState(null);
+    const [smartBinStateById, setSmartBinStateById] = useState({});
 
     const optimizeImage = useCallback(async (uri) => {
         try {
@@ -127,6 +133,7 @@ export default function CameraScreen({ theme = "light", onAuthExpired }) {
             setPredictUri(null);
             setResult(null);
             setActiveTipId(null);
+            setSmartBinStateById({});
         }
     }
 
@@ -147,6 +154,7 @@ export default function CameraScreen({ theme = "light", onAuthExpired }) {
             setPredictUri(null);
             setResult(null);
             setActiveTipId(null);
+            setSmartBinStateById({});
         }
     }
 
@@ -165,6 +173,7 @@ export default function CameraScreen({ theme = "light", onAuthExpired }) {
             const data = await predictImageFromUri(optimizedUri, token);
             setResult(data);
             setActiveTipId(null);
+            setSmartBinStateById({});
         } catch (e) {
             if (e.status === 401 || e.status === 403) {
                 await clearAuth();
@@ -176,6 +185,43 @@ export default function CameraScreen({ theme = "light", onAuthExpired }) {
             Alert.alert("Prediction error", e.message ?? "Unknown error");
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function sendToSmartBin(det, tipId) {
+        if (!canSendToSmartBin(det.label)) {
+            setSmartBinStateById((prev) => ({
+                ...prev,
+                [tipId]: { loading: false, message: "Smart bin sorting is only available for plastic, paper, glass, and metal." },
+            }));
+            return;
+        }
+
+        try {
+            setSmartBinStateById((prev) => ({
+                ...prev,
+                [tipId]: { loading: true, message: "" },
+            }));
+
+            const token = await getToken();
+            const data = await sendDetectionToSmartBin(det.label, token);
+
+            setSmartBinStateById((prev) => ({
+                ...prev,
+                [tipId]: { loading: false, message: data.message || "Detection is sent to Smart Recycling Bin." },
+            }));
+        } catch (e) {
+            if (e.status === 401 || e.status === 403) {
+                await clearAuth();
+                Alert.alert("Session expired", "Please log in again.");
+                onAuthExpired?.();
+                return;
+            }
+
+            setSmartBinStateById((prev) => ({
+                ...prev,
+                [tipId]: { loading: false, message: e.message ?? "Smart bin command failed." },
+            }));
         }
     }
 
@@ -257,6 +303,8 @@ export default function CameraScreen({ theme = "light", onAuthExpired }) {
                         const classTip = getClassTip(det.label);
                         const color = getBinColor(det.label, det.binColor);
                         const isTipActive = activeTipId === tipId;
+                        const smartBinState = smartBinStateById[tipId] || { loading: false, message: "" };
+                        const smartBinEnabled = canSendToSmartBin(det.label);
 
                         return (
                         <Pressable
@@ -266,14 +314,36 @@ export default function CameraScreen({ theme = "light", onAuthExpired }) {
                                 { backgroundColor: colors.card, borderColor: color },
                             ]}
                         >
-                            <Pressable
-                                style={styles.detectTitleButton}
-                                onPress={() => setActiveTipId(tipId)}
-                            >
-                                <Text style={[styles.detectTitle, { borderBottomColor: color, color: colors.text }]}>
-                                    {det.label}
-                                </Text>
-                            </Pressable>
+                            <View style={styles.detectHeader}>
+                                <Pressable
+                                    style={styles.detectTitleButton}
+                                    onPress={() => setActiveTipId(tipId)}
+                                >
+                                    <Text style={[styles.detectTitle, { borderBottomColor: color, color: colors.text }]}>
+                                        {det.label}
+                                    </Text>
+                                </Pressable>
+
+                                <Pressable
+                                    style={[
+                                        styles.smartBinButton,
+                                        {
+                                            borderColor: color,
+                                            backgroundColor: colors.nested,
+                                            opacity: smartBinEnabled && !smartBinState.loading ? 1 : 0.55,
+                                        },
+                                    ]}
+                                    onPress={() => sendToSmartBin(det, tipId)}
+                                    disabled={!smartBinEnabled || smartBinState.loading}
+                                    hitSlop={8}
+                                >
+                                    {smartBinState.loading ? (
+                                        <ActivityIndicator size="small" color={colors.text} />
+                                    ) : (
+                                        <MaterialCommunityIcons name="trash-can-outline" size={21} color={colors.text} />
+                                    )}
+                                </Pressable>
+                            </View>
 
                             {isTipActive && (
                                 <View style={[styles.tipCard, { backgroundColor: colors.nested, borderColor: colors.border, borderTopColor: color }]}>
@@ -305,6 +375,12 @@ export default function CameraScreen({ theme = "light", onAuthExpired }) {
                             <Text style={[styles.detectText, { color: colors.muted }]}>
                                 Confidence: {((det.confidence || 0) * 100).toFixed(1)}%
                             </Text>
+
+                            {smartBinState.message ? (
+                                <Text style={[styles.smartBinMessage, { color: colors.muted }]}>
+                                    {smartBinState.message}
+                                </Text>
+                            ) : null}
                         </Pressable>
                         );
                     })}
@@ -435,6 +511,12 @@ const styles = StyleSheet.create({
     detectTitleButton: {
         alignSelf: "flex-start",
     },
+    detectHeader: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: 12,
+    },
     detectTitle: {
         fontWeight: "700",
         fontSize: 16,
@@ -444,6 +526,19 @@ const styles = StyleSheet.create({
     },
     detectText: {
         color: "#607080",
+    },
+    smartBinButton: {
+        width: 38,
+        height: 38,
+        borderRadius: 10,
+        borderWidth: 1,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    smartBinMessage: {
+        color: "#607080",
+        fontSize: 13,
+        marginTop: 8,
     },
     tipCard: {
         borderWidth: 1,

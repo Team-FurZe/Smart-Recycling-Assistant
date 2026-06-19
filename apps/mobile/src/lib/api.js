@@ -7,6 +7,7 @@ const ACCOUNT_PASSWORD_URL = `${BACKEND_URL}/api/v1/account/password`;
 const HISTORY_URL = `${BACKEND_URL}/api/v1/history/me`;
 const PREDICT_URL = `${BACKEND_URL}/api/v1/predict`;
 const PREDICT_LIVE_URL = `${BACKEND_URL}/api/v1/predict/live`;
+const SMART_BIN_SORT_URL = `${BACKEND_URL}/api/v1/smart-bin/sort`;
 const REQUEST_TIMEOUT_MS = 12000;
 
 async function parseJsonResponse(res) {
@@ -122,6 +123,23 @@ export async function predictImageFromUri(uri, token, options = {}) {
         },
         body: formData,
         signal: options.signal,
+    });
+
+    return parseJsonResponse(res);
+}
+
+export async function sendDetectionToSmartBin(label, token) {
+    if (!token) {
+        throw new Error("Session expired. Please log in again.");
+    }
+
+    const res = await fetchWithTimeout(SMART_BIN_SORT_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ label }),
     });
 
     return parseJsonResponse(res);

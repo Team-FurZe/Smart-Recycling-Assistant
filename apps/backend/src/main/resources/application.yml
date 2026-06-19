@@ -28,5 +28,12 @@ app:
 ai:
   url: ${AI_URL:http://localhost:8001}
 
+smart-bin:
+  serial:
+    port: ${SMART_BIN_SERIAL_PORT:}
+    baud-rate: ${SMART_BIN_BAUD_RATE:9600}
+  bridge:
+    url: ${SMART_BIN_BRIDGE_URL:}
+
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:19006,http://10.0.2.2:8080}

@@ -1,0 +1,11 @@
+.venv
+__pycache__
+*.pyc
+ai-model
+yolo_runs
+old_models
+app/old_models
+yolo11n.pt
+yolov8n.pt
+*.pt
+!app/models/*.pt

@@ -1,0 +1,39 @@
+server:
+  port: ${BACKEND_PORT:8080}
+  tomcat:
+    max-swallow-size: -1
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${PG_HOST:localhost}:${PG_PORT:5432}/${PG_DB:sra}
+    username: ${PG_USER:sra_user}
+    password: ${PG_PASS:sra_pass}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-this-secret-key-change-this-secret-key-123456}
+    expiration-ms: 86400000
+  upload:
+    dir: ${UPLOAD_DIR:uploads}
+
+ai:
+  url: ${AI_URL:http://localhost:8001}
+
+smart-bin:
+  serial:
+    port: ${SMART_BIN_SERIAL_PORT:}
+    baud-rate: ${SMART_BIN_BAUD_RATE:9600}
+  bridge:
+    url: ${SMART_BIN_BRIDGE_URL:}
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:19006,http://10.0.2.2:8080}

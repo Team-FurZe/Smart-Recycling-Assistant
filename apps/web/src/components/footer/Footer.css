@@ -1,0 +1,27 @@
+.app-footer {
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
+
+.app-footer__inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 18px 24px 22px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+.app-footer__inner p {
+    margin: 0;
+}
+
+@media (max-width: 620px) {
+    .app-footer__inner {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}

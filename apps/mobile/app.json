@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "SRA-Mobile",
+    "slug": "mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera for live recyclable waste detection.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to show nearby recycling bin locations."
+      }
+    },
+    "android": {
+      "package": "com.furze.sramobile",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB7MOk-TCjHyogCjI7mVtFX2nqz0DKPwYE"
+        }
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}

@@ -1,0 +1,226 @@
+.history-page {
+    display: grid;
+    gap: 20px;
+}
+
+.history-page__header {
+    padding: 28px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.history-page__eyebrow {
+    margin: 0 0 8px;
+    color: var(--color-primary);
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.history-page__title {
+    margin: 0 0 10px;
+    color: var(--color-text);
+    font-size: 2.45rem;
+    line-height: 1.08;
+}
+
+.history-page__subtitle {
+    margin: 0;
+    color: var(--color-muted);
+}
+
+.history-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.history-search,
+.history-sort {
+    min-height: 46px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    padding: 11px 13px;
+}
+
+.history-search {
+    flex: 1;
+    min-width: 250px;
+}
+
+.history-sort {
+    min-width: 170px;
+}
+
+.history-info-card {
+    padding: 18px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-muted);
+}
+
+.history-info-card--error {
+    border-color: #f1c2c2;
+    background: #fff6f6;
+    color: var(--color-danger);
+}
+
+.history-list {
+    display: grid;
+    gap: 18px;
+}
+
+.history-card {
+    display: grid;
+    grid-template-columns: minmax(280px, 390px) 1fr;
+    gap: 18px;
+    padding: 18px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.history-card__image {
+    min-height: 270px;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-soft);
+}
+
+.history-card__image-empty {
+    width: 100%;
+    min-height: 270px;
+    display: grid;
+    place-items: center;
+    color: var(--color-muted);
+}
+
+.history-card__content {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+}
+
+.history-card__meta {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.history-card__title {
+    margin: 0 0 5px;
+    color: var(--color-text);
+    font-size: 1.1rem;
+}
+
+.history-card__date,
+.history-card__summary {
+    margin: 0;
+    color: var(--color-muted);
+}
+
+.history-card__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.history-badge,
+.history-empty-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-size: 0.84rem;
+    font-weight: 800;
+}
+
+.history-badge {
+    background: var(--color-primary-soft);
+    color: var(--color-primary-strong);
+}
+
+.history-empty-badge {
+    background: var(--color-surface-soft);
+    color: var(--color-muted);
+}
+
+.history-toggle-btn {
+    min-height: 40px;
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-primary);
+    color: #ffffff;
+    font-weight: 800;
+    padding: 9px 13px;
+    cursor: pointer;
+}
+
+.history-card__details {
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-soft);
+}
+
+.history-details-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.history-detail-card {
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+}
+
+.history-detail-card p,
+.history-details-empty,
+.history-details-pre {
+    margin: 0 0 8px;
+    color: var(--color-muted);
+}
+
+.history-detail-card p:last-child,
+.history-details-empty:last-child {
+    margin-bottom: 0;
+}
+
+.history-details-pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+@media (max-width: 900px) {
+    .history-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .history-page__header,
+    .history-card {
+        padding: 18px;
+    }
+
+    .history-page__title {
+        font-size: 2rem;
+    }
+
+    .history-card__meta {
+        flex-direction: column;
+    }
+
+    .history-toggle-btn,
+    .history-sort {
+        width: 100%;
+    }
+}
